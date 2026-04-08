@@ -13,16 +13,14 @@ import searchRoute from "./routes/search.route.js";
 import profileRoute from "./routes/profile.route.js";
 import connectDB from "./lib/db.js";
 import cookieParser from "cookie-parser";
-
+import dns from "dns";
 
 const PORT = process.env.PORT;
 
 const app = express();
 
-// app.use(cors({
-//     origin: 'http://localhost:5173',
-//     credentials: true
-// }));
+// Force IPv4 DNS resolution — fixes ENETUNREACH on Render (IPv6 not routable)
+dns.setDefaultResultOrder('ipv4first');
 
 app.use(cors({
   origin: process.env.CLIENT_URL,
