@@ -1,8 +1,8 @@
-import express from 'express';
 import dotenv from "dotenv";
-import cors from 'cors';
 dotenv.config();
 
+import express from 'express';
+import cors from 'cors';
 import authRoutes from './routes/auth.route.js';
 import followRoutes from "./routes/follow.route.js";
 import likeRoutes from "./routes/likes.route.js";
@@ -13,14 +13,14 @@ import searchRoute from "./routes/search.route.js";
 import profileRoute from "./routes/profile.route.js";
 import connectDB from "./lib/db.js";
 import cookieParser from "cookie-parser";
-import dns from "dns";
+// import dns from "dns";
 
 const PORT = process.env.PORT;
 
 const app = express();
 
-// Force IPv4 DNS resolution — fixes ENETUNREACH on Render (IPv6 not routable)
-dns.setDefaultResultOrder('ipv4first');
+// // Force IPv4 DNS resolution — fixes ENETUNREACH on Render (IPv6 not routable)
+// dns.setDefaultResultOrder('ipv4first');
 
 app.use(cors({
   origin: process.env.CLIENT_URL,

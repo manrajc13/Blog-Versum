@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SocialAuthButtons from '../components/SocialAuthButtons'
-import EmailVerificationCard from '../components/EmailVerificationCard'
 import PageDoodles from '../components/shared/PageDoodles'
 import { useAuthStore } from "../store/useAuthStore";
 import toast from 'react-hot-toast';
@@ -9,10 +8,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [showVerification, setShowVerification] = useState(false);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-  const {isLoggingIn, login, sendOTP, verifyOTP} = useAuthStore();
+  const {isLoggingIn, login} = useAuthStore();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -36,54 +32,9 @@ export default function Login() {
       }
       return false;
     } catch (error){
-      // Handle 403 verification error
-      if (error.response?.status === 403 && error.response?.data?.message?.includes("not verified")) {
-        setIsSendingOtp(true);
-        const otpSent = await sendOTP({
-          username: formData.username,
-          email: error.response?.data?.email, // Assuming username could be email, adjust if needed
-        });
-        setIsSendingOtp(false);
-
-        if (otpSent) {
-          setShowVerification(true);
-        }
-        return false;
-      }
       console.log(error);
     }
   }
-
-  const handleResendOtp = async () => {
-    return await sendOTP({
-      username: formData.username,
-      email: formData.username,
-    });
-  };
-
-  const handleVerifyOtp = async (otp) => {
-    setIsVerifyingOtp(true);
-    try {
-      const verified = await verifyOTP({ username: formData.username, otp });
-      if (!verified) {
-        return false;
-      }
-
-      const loggedIn = await login({
-        username: formData.username,
-        password: formData.password,
-      });
-
-      if (loggedIn) {
-        navigate('/onboarding');
-        return true;
-      }
-
-      return false;
-    } finally {
-      setIsVerifyingOtp(false);
-    }
-  };
 
   return (
     <div className="layout-container flex h-full grow flex-col min-h-screen bg-[#f8f5f6] dark:bg-[#221014] font-display relative">
@@ -147,19 +98,6 @@ export default function Login() {
           {/* Right Panel — Login Form */}
           <div className="flex justify-center w-full">
             <div className="w-full max-w-[480px] bg-white dark:bg-[#221014] p-8 md:p-10 rounded-xl border-4 border-whimsical-purple shadow-2xl">
-              {isSendingOtp || isVerifyingOtp ? (
-                <div className="min-h-[420px] flex flex-col items-center justify-center text-center space-y-4">
-                  <Loader2 className="size-12 text-primary animate-spin" />
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                    {isSendingOtp ? "Sending OTP..." : "Verifying OTP..."}
-                  </h3>
-                  <p className="text-slate-500 dark:text-slate-400">
-                    {isSendingOtp
-                      ? "Please wait while we prepare your verification step."
-                      : "Please wait while we verify your code and sign you in."}
-                  </p>
-                </div>
-              ) : !showVerification ? (
                 <>
                   <div className="mb-8 text-center lg:text-left">
                     <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 mb-2">Welcome Back!</h2>
@@ -249,29 +187,13 @@ export default function Login() {
                     </button>
                   </p>
                 </>
-              ) : (
-                <div className="space-y-6">
-                  <EmailVerificationCard
-                    email={formData.username}
-                    onResend={handleResendOtp}
-                    onVerify={handleVerifyOtp}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowVerification(false)}
-                    className="w-full py-3 rounded-xl border-2 border-primary/20 text-primary font-bold hover:bg-primary/10 transition-all"
-                  >
-                    Back to Login Form
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </main>
 
       <footer className="p-6 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">
-        <p>© 2024 BlogVerse. Made with magic and coffee.</p>
+        <p>© 2026 BlogVerse. Made with magic and coffee.</p>
       </footer>
     </div>
   )

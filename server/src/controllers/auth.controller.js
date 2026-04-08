@@ -1,9 +1,6 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import generateToken from "../lib/utils/token.js";
-import { generateOTP } from "../lib/utils/otp.js";
-import { sendOTPEmail } from "../lib/utils/email.js";
 import cloudinary from "../lib/cloudinary.js";
 
 
@@ -52,7 +49,7 @@ export const signup = async (req, res) => {
 
         if (newUser){
             await newUser.save();
-            res.status(201).json({message: "Awaiting verification"});
+            res.status(201).json({message: "Account created successfully"});
         } else {
             res.status(400).json({message: "Invalid user data"});
         }
@@ -80,10 +77,6 @@ export const login = async (req, res) => {
         
         if (!isPasswordCorrect) {
             return res.status(400).json({message: "Invalid password"});
-        }
-
-        if (!user.isVerified){
-            return res.status(403).json({message: "Account not verified. Please wait for verification.", email: user.email});
         }
 
         generateToken(user._id, res);
@@ -120,92 +113,6 @@ export const checkAuth = (req, res) => {
     } catch (error){
         console.log("Error in checkAuth controller", error.message);
         res.status(500).json({message: "Internal Server Error"});
-    }
-};
-
-export const verifyEmailOTP = async (req, res) => {
-    const { username, otp } = req.body;
-    try {
-        const identifierQuery = getIdentifierQuery(username);
-        if (!identifierQuery) {
-            return res.status(400).json({ message: "Username or email is required" });
-        }
-
-        const hashedOTP = crypto
-            .createHash("sha256")
-            .update(otp)
-            .digest("hex");
-
-        const user = await User.findOne({
-            ...identifierQuery,
-            emailOTP: hashedOTP,
-            otpExpires: { $gt: Date.now() }
-        });
-
-        if (!user) {
-            return res.status(400).json({
-                message: "Invalid or expired OTP"
-            });
-        }
-
-        user.isVerified = true;
-        user.emailOTP = undefined;
-        user.otpExpires = undefined;
-
-        await user.save();
-
-        res.status(200).json({
-            message: "Email verified successfully"
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
-
-    }
-};
-
-export const sendOTP = async (req, res) => {
-    const { username, email } = req.body || {};
-
-    try {
-        if (!username && !email) {
-            return res.status(400).json({ message: "username or email is required" });
-        }
-
-        let userEmail = email;
-        let userQuery = null;
-
-        if (!userEmail && username) {
-            userQuery = getIdentifierQuery(username);
-            if (!userQuery) {
-                return res.status(400).json({ message: "Username or email is required" });
-            }
-
-            const user = await User.findOne(userQuery, { email: 1, _id: 0 });
-            userEmail = user?.email;
-        } else if (userEmail) {
-            userQuery = { email: String(userEmail).toLowerCase().trim() };
-        }
-
-        if (!userEmail) {
-            return res.status(400).json({ message: "User not found" });
-        }
-
-        const otp = generateOTP();
-        await User.findOneAndUpdate(
-            userQuery,
-            {
-                emailOTP: otp.hashedOTP,
-                otpExpires: otp.expires
-            }
-        );
-
-        await sendOTPEmail(userEmail, otp.plainOTP);
-        res.status(200).json({ message: "OTP sent successfully" });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
     }
 };
 

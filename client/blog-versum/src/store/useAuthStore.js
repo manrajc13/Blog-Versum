@@ -84,31 +84,6 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    sendOTP: async (data) => {
-        try{
-            const response = await axiosInstance.post("/auth/send-otp", data);
-            toast.success(response.data.message || "OTP sent successfully");
-            return true;
-        } catch (error) {
-            toast.error(error.response.data.message || "Failed to send OTP");
-            return false;
-        } 
-    },
-
-    verifyOTP: async (data, options = {}) => {
-        const { silent = false } = options;
-        try{
-            const response = await axiosInstance.post("/auth/verify-email", data);
-            if (!silent) {
-                toast.success(response.data.message || "Email verified successfully");
-            }
-            return true;
-        } catch (error) {
-            toast.error(error.response.data.message || "Failed to verify email");
-            return false;
-        }
-    },
-
     logout: async () => {
         try{
             await axiosInstance.post("/auth/logout");
@@ -131,10 +106,6 @@ export const useAuthStore = create((set, get) => ({
             }
             return true;
         } catch (error) {
-            // If it's a 403 verification error, throw it so Login.jsx can handle verification flow
-            if (error.response?.status === 403 && error.response?.data?.message?.includes("not verified")) {
-                throw error;
-            }
             toast.error(error.response.data.message || "Failed to login");
             return false;
         } finally {

@@ -22,7 +22,6 @@ export async function seedUsers() {
     const user = await User.create({
       ...data,
       password: hashedPassword,
-      isVerified: true, // bypass email verification for seed data
     });
     console.log(`  Created user: ${user.username} (${user._id})`);
     createdUsers.push(user);
