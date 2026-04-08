@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BlogVerse Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#f42559",
+              "background-light": "#f8f5f6",
+              "background-dark": "#221014",
+              "bubbly-teal": "#4fd1c5",
+              "whimsical-purple": "#6b46c1"
+            },
+            fontFamily: {
+              "display": ["Plus Jakarta Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .cartoon-border {
+            border-width: 4px;
+            border-style: solid;
+        }
+        .bouncy-shadow {
+            box-shadow: 0px 6px 0px 0px rgba(0,0,0,0.1);
+        }
+        .bouncy-shadow-primary {
+            box-shadow: 0px 6px 0px 0px #bd1d45;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display">
+<div class="layout-container flex h-full grow flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-primary/10 px-6 md:px-10 py-4 bg-white dark:bg-background-dark">
+<div class="flex items-center gap-3 text-slate-900 dark:text-slate-100">
+<div class="size-8 text-primary">
+<span class="material-symbols-outlined text-4xl">auto_stories</span>
+</div>
+<h2 class="text-2xl font-black leading-tight tracking-tight">BlogVerse</h2>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-slate-700 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-slate-700 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors" href="#">Explore</a>
+<a class="text-slate-700 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors" href="#">Community</a>
+</nav>
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-full h-11 px-5 bg-primary text-white text-sm font-black shadow-lg hover:scale-105 transition-transform">
+<span>Sign Up</span>
+</button>
+</div>
+</header>
+<main class="flex-1 flex items-center justify-center p-4 md:p-10">
+<div class="max-w-[1100px] w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+<div class="hidden lg:flex flex-col items-center justify-center relative bg-bubbly-teal/20 rounded-xl p-12 min-h-[600px] overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none grid grid-cols-4 gap-10 p-10">
+<span class="material-symbols-outlined text-6xl">coffee</span>
+<span class="material-symbols-outlined text-6xl rotate-12">lightbulb</span>
+<span class="material-symbols-outlined text-6xl -rotate-12">edit</span>
+<span class="material-symbols-outlined text-6xl">emoji_objects</span>
+<span class="material-symbols-outlined text-6xl rotate-45">auto_awesome</span>
+<span class="material-symbols-outlined text-6xl">draw</span>
+<span class="material-symbols-outlined text-6xl -rotate-45">stylus</span>
+<span class="material-symbols-outlined text-6xl">menu_book</span>
+</div>
+<div class="relative z-10 flex flex-col items-center text-center">
+<div class="w-64 h-64 bg-white rounded-full flex items-center justify-center shadow-xl cartoon-border border-bubbly-teal mb-8">
+<img class="w-48 h-48 object-contain" data-alt="Cheerful cartoon book mascot waving happily" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjOMH5E-7pL9oozwTRtmZM5UbUAFgVbZ1_LzYLmnsSJkFMl-QzLuMA65DOlBt4oTxWWhdC-QAaQpAL3NUJtg1_UAQ2JBudhkt4NXsjqWFC1VfIf0kyf_YKng9YSj6bRMmjUJfxYSlWRZJsrdZjvbY0PQFwudD11LYpK300xrk3pRiXhWgW2GdWH3nWwaFh7nfEQt380Wn9jdNIVWS5AiCdXsPnktZh5W8sJYYTpyrhGEVrpvALApq3uvnDFpl7dKo2ZCux3IYKrg"/>
+</div>
+<h1 class="text-4xl font-black text-slate-900 mb-4">Ready to write?</h1>
+<p class="text-lg font-medium text-slate-700 max-w-sm">Your magical library of stories is just one click away!</p>
+<div class="mt-8 flex gap-4">
+<div class="w-12 h-16 bg-primary rounded-lg shadow-md -rotate-12 cartoon-border border-primary"></div>
+<div class="w-12 h-20 bg-whimsical-purple rounded-lg shadow-md rotate-6 cartoon-border border-whimsical-purple"></div>
+<div class="w-12 h-14 bg-bubbly-teal rounded-lg shadow-md -rotate-6 cartoon-border border-bubbly-teal"></div>
+</div>
+</div>
+</div>
+<div class="flex justify-center w-full">
+<div class="w-full max-w-[480px] bg-white dark:bg-background-dark p-8 md:p-10 rounded-xl cartoon-border border-whimsical-purple shadow-2xl">
+<div class="mb-8 text-center lg:text-left">
+<h2 class="text-3xl font-black text-slate-900 dark:text-slate-100 mb-2">Welcome Back!</h2>
+<p class="text-slate-600 dark:text-slate-400 font-medium">Log in to your BlogVerse account</p>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="text-sm font-black text-slate-700 dark:text-slate-300 ml-1">Email Address</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-bubbly-teal">alternate_email</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 bg-white dark:bg-slate-800 rounded-xl border-2 border-bubbly-teal focus:ring-4 focus:ring-bubbly-teal/20 focus:border-bubbly-teal outline-none transition-all font-medium text-slate-900 dark:text-slate-100" placeholder="awesome.writer@blogverse.com" type="email"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-black text-slate-700 dark:text-slate-300 ml-1">Password</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-bubbly-teal">lock</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 bg-white dark:bg-slate-800 rounded-xl border-2 border-bubbly-teal focus:ring-4 focus:ring-bubbly-teal/20 focus:border-bubbly-teal outline-none transition-all font-medium text-slate-900 dark:text-slate-100" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<div class="flex items-center justify-between px-1">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="w-5 h-5 rounded border-2 border-bubbly-teal text-bubbly-teal focus:ring-bubbly-teal/30" type="checkbox"/>
+<span class="text-sm font-bold text-slate-600 dark:text-slate-400">Remember me</span>
+</label>
+<a class="text-sm font-black text-primary hover:underline" href="#">Forgot Password?</a>
+</div>
+<button class="w-full h-14 bg-primary text-white text-lg font-black rounded-xl bouncy-shadow-primary hover:translate-y-1 hover:shadow-none transition-all uppercase tracking-wider" type="submit">
+                                Log In
+                            </button>
+</form>
+<div class="relative my-8">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t-2 border-slate-100 dark:border-slate-800"></div>
+</div>
+<div class="relative flex justify-center text-sm">
+<span class="px-4 bg-white dark:bg-background-dark text-slate-500 font-bold uppercase tracking-widest">Or continue with</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center h-12 gap-2 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-bold text-slate-700 dark:text-slate-300">
+<img class="w-6 h-6" data-alt="Cartoon style Google logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAokILJgpHRFrQhu9OMFbiEby4OI8E_tPud9OU4dANRgPJ32edOsreU4EuLe1fzQMrOBuqWbR9KEwOQDHcJ3_LiMtIIQ6E4IDYsyyJTBnXa-SpZrnQzJ1aLTphVjl-k52E5CFreeEkjcwb1QKV_snPy41iwUIHd4TvkArKPW6KolEcQ3X--dThR4E3zoTuMWAEeF4YUiwz45VL36mt1vY7ZdJDjP47mFSW_3X6VtmiBWJnk1e02MjxOXulfIyhlrcHZAG9pxd8bLw"/>
+<span>Google</span>
+</button>
+<button class="flex items-center justify-center h-12 gap-2 border-2 border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-bold text-slate-700 dark:text-slate-300">
+<img class="w-6 h-6" data-alt="Cartoon style GitHub logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAgJXSNeLUTbZ6NtjtOIhj2zyhxhaAl4T7WK0zrdRwlcRqBwFZoFfwI2f0CoB9aaT8UgFUd3rWNGPUu5HQr6TDKVzhwDbIOWuXM64MwJDH2FGK9BOUHXMfR_OFQM4e1CMBmSAzLrphH904sStt27W9a0pY8Dry0wCM0IuCJJJ0fwCJ9O9WU0Qh3BJ0s0bnZ330b0lrAUW-0B39sCYrGkQAEZ4ItCNhgBl4izD27A4X0ICKItZXpEQcK5DOQDGyUfw6NJcPijG6fQ"/>
+<span>GitHub</span>
+</button>
+</div>
+<p class="mt-8 text-center font-bold text-slate-600 dark:text-slate-400">
+                            Don't have an account? 
+                            <a class="text-whimsical-purple hover:text-primary underline decoration-2 underline-offset-4 transition-colors" href="#">Sign Up</a>
+</p>
+</div>
+</div>
+</div>
+</main>
+<footer class="p-6 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">
+<p>© 2024 BlogVerse. Made with magic and coffee.</p>
+</footer>
+</div>
+</body></html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#930df2",
+                        "secondary": "#06b6d4",
+                        "accent": "#f97316",
+                        "background-light": "#f7f5f8",
+                        "background-dark": "#1b1022",
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .bubbly-border {
+            border-width: 3px;
+        }
+        .floating-doodle {
+            position: absolute;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen relative overflow-x-hidden">
+<!-- Floating Background Doodles (Simulated with Icons) -->
+<div class="floating-doodle top-10 left-10 text-primary"><span class="material-symbols-outlined !text-6xl">edit</span></div>
+<div class="floating-doodle top-40 right-20 text-secondary"><span class="material-symbols-outlined !text-5xl">favorite</span></div>
+<div class="floating-doodle bottom-20 left-1/4 text-accent"><span class="material-symbols-outlined !text-7xl">menu_book</span></div>
+<div class="floating-doodle top-1/2 right-10 text-primary"><span class="material-symbols-outlined !text-4xl">star</span></div>
+<div class="floating-doodle bottom-10 right-1/3 text-secondary"><span class="material-symbols-outlined !text-6xl">draw</span></div>
+<div class="layout-container flex h-full grow flex-col">
+<header class="flex items-center justify-between whitespace-nowrap px-10 py-5">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-8">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"></path>
+</svg>
+</div>
+<h2 class="text-2xl font-black leading-tight tracking-tight">BlogVerse</h2>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-sm font-medium">Already a member?</span>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center rounded-full h-10 px-5 bg-primary/10 text-primary text-sm font-bold border-2 border-primary/20 hover:bg-primary/20 transition-all">
+                    Login
+                </button>
+</div>
+</header>
+<main class="flex-1 flex items-center justify-center p-6 md:p-12">
+<div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<!-- Left Side: Mascot and Doodles -->
+<div class="hidden lg:flex flex-col items-center justify-center relative">
+<div class="relative w-full aspect-square max-w-md bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full flex items-center justify-center">
+<!-- Simulated Cartoon Mascot with Vector/Shapes -->
+<div class="w-64 h-80 bg-accent rounded-t-full relative shadow-xl border-4 border-slate-900 overflow-hidden">
+<div class="absolute top-10 left-10 w-12 h-12 bg-white rounded-full border-4 border-slate-900 flex items-center justify-center">
+<div class="w-4 h-4 bg-slate-900 rounded-full"></div>
+</div>
+<div class="absolute top-10 right-10 w-12 h-12 bg-white rounded-full border-4 border-slate-900 flex items-center justify-center">
+<div class="w-4 h-4 bg-slate-900 rounded-full"></div>
+</div>
+<div class="absolute top-32 left-1/2 -translate-x-1/2 w-16 h-8 border-b-8 border-slate-900 rounded-full"></div>
+<div class="absolute bottom-0 w-full h-20 bg-slate-200 border-t-4 border-slate-900"></div>
+</div>
+<!-- Speech Bubble -->
+<div class="absolute -top-10 -right-5 bg-white p-6 rounded-xl border-4 border-slate-900 shadow-lg transform rotate-6">
+<p class="font-bold text-xl text-slate-900">Ready to write?</p>
+<div class="absolute -bottom-4 left-4 w-6 h-6 bg-white border-r-4 border-b-4 border-slate-900 transform rotate-45"></div>
+</div>
+<!-- Decorative Stars -->
+<span class="material-symbols-outlined absolute top-0 left-0 !text-5xl text-accent animate-pulse">star</span>
+<span class="material-symbols-outlined absolute bottom-10 right-0 !text-4xl text-secondary">auto_awesome</span>
+</div>
+<div class="mt-12 text-center">
+<h1 class="text-5xl font-black text-slate-900 dark:text-slate-100 mb-4 tracking-tight">Join the Verse!</h1>
+<p class="text-xl text-slate-600 dark:text-slate-400">The world's first blog where pencils talk back.</p>
+</div>
+</div>
+<!-- Right Side: Sign Up Form -->
+<div class="bg-white dark:bg-slate-800 p-8 md:p-12 rounded-lg shadow-2xl border-b-8 border-r-8 border-primary/20">
+<div class="mb-8">
+<h2 class="text-3xl font-black text-slate-900 dark:text-slate-100 mb-2">Create Account</h2>
+<p class="text-slate-500 dark:text-slate-400">Fill in the bubbly boxes to get started!</p>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Username</label>
+<input class="w-full px-6 py-4 rounded-xl bubbly-border border-secondary focus:ring-4 focus:ring-secondary/20 outline-none transition-all dark:bg-slate-900" placeholder="CoolPencilUser" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Email Address</label>
+<input class="w-full px-6 py-4 rounded-xl bubbly-border border-primary focus:ring-4 focus:ring-primary/20 outline-none transition-all dark:bg-slate-900" placeholder="hello@blogverse.com" type="email"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Password</label>
+<input class="w-full px-6 py-4 rounded-xl bubbly-border border-secondary focus:ring-4 focus:ring-secondary/20 outline-none transition-all dark:bg-slate-900" placeholder="••••••••" type="password"/>
+</div>
+<button class="w-full py-5 bg-accent hover:bg-accent/90 text-white text-xl font-black rounded-xl shadow-lg transform active:scale-95 transition-all mt-4 border-b-4 border-accent/70">
+                            SIGN UP NOW!
+                        </button>
+</form>
+<div class="relative my-10 text-center">
+<span class="bg-white dark:bg-slate-800 px-4 relative z-10 text-sm font-bold text-slate-400 uppercase tracking-widest">Or sign up with</span>
+<div class="absolute top-1/2 left-0 w-full h-px bg-slate-200 dark:bg-slate-700"></div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-3 px-6 py-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">google</span>
+<span class="font-bold text-slate-700 dark:text-slate-200 text-sm">Google</span>
+</button>
+<button class="flex items-center justify-center gap-3 px-6 py-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">terminal</span>
+<span class="font-bold text-slate-700 dark:text-slate-200 text-sm">GitHub</span>
+</button>
+</div>
+<p class="mt-8 text-center text-xs text-slate-400 font-medium">
+                        By signing up, you agree to our 
+                        <a class="text-primary hover:underline" href="#">Terms of Fun</a> and 
+                        <a class="text-primary hover:underline" href="#">Ink Policy</a>.
+                    </p>
+</div>
+</div>
+</main>
+<footer class="py-10 text-center text-slate-400 text-sm">
+<p>© 2024 BlogVerse. Crafted with ✏️ and lots of 💜</p>
+</footer>
+</div>
+</body></html>

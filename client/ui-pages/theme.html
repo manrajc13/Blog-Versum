@@ -1,0 +1,260 @@
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BlogVerse Settings &amp; Themes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8c2bee",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10 px-6 py-3 lg:px-12">
+<div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="bg-primary p-2 rounded-xl text-white rotate-[-6deg] group-hover:rotate-0 transition-transform">
+<span class="material-symbols-outlined text-2xl">auto_awesome</span>
+</div>
+<h1 class="text-2xl font-black tracking-tight text-primary">BlogVerse</h1>
+</div>
+<div class="hidden md:flex items-center bg-primary/5 dark:bg-primary/20 rounded-full px-4 py-2 border border-primary/10 focus-within:ring-2 ring-primary/30 transition-all">
+<span class="material-symbols-outlined text-primary/60 mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 lg:w-64 placeholder:text-primary/40" placeholder="Search universes..." type="text"/>
+</div>
+</div>
+<nav class="hidden lg:flex items-center gap-8 font-bold text-sm uppercase tracking-wider text-slate-600 dark:text-slate-300">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-lg">explore</span> Explore</a>
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-lg">book</span> My Blogs</a>
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-lg">group</span> Community</a>
+</nav>
+<div class="flex items-center gap-3">
+<button class="size-10 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-10 w-10 rounded-full border-2 border-primary bg-primary/20 overflow-hidden shadow-inner" data-alt="User cartoon avatar illustration" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBjXRbfyDUjsR-KLCnXbgrmmK3pe7jLLh4nJl14n8uhzc35uY4VlxDUJotT19NU1S3pZZXtO8wsmnLumbelEIhmpwv9iQLAH_tcIuQ01qHIXY6TtY1J64_uo7NLkpzNK0a3pWgvDGxTFV2TRkPkWLAOQcfgftkjPOktu24a7G2Iogw3LupC5ecjltzJdnwJi_8hKUXoddggdmfJDRrDwyqo7jPpv076Xbs6y63-vT4FuuYCiw-qCEiVBntrjVrlIfogOlddg4MZoQ')">
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 p-6 lg:p-12">
+<!-- Sidebar Navigation -->
+<aside class="w-full lg:w-64 space-y-2">
+<div class="p-4 mb-4 bg-primary/5 dark:bg-primary/10 rounded-xl">
+<p class="text-xs font-black text-primary uppercase tracking-[0.2em] mb-4 px-2">Settings Menu</p>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white dark:hover:bg-primary/20 transition-all text-slate-600 dark:text-slate-300 font-bold group" href="#">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">person</span>
+                        Profile
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/30 font-bold" href="#">
+<span class="material-symbols-outlined">palette</span>
+                        Theme
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white dark:hover:bg-primary/20 transition-all text-slate-600 dark:text-slate-300 font-bold group" href="#">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">notifications_active</span>
+                        Notifications
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white dark:hover:bg-primary/20 transition-all text-slate-600 dark:text-slate-300 font-bold group" href="#">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">security</span>
+                        Privacy
+                    </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white dark:hover:bg-primary/20 transition-all text-slate-600 dark:text-slate-300 font-bold group" href="#">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">logout</span>
+    Logout
+</a>
+</nav>
+</div>
+</aside>
+<!-- Main Content -->
+<section class="flex-1 space-y-12">
+<!-- Theme Section -->
+<div>
+<div class="mb-8">
+<h2 class="text-4xl font-black tracking-tight mb-2">Theme Universe</h2>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Pick a vibe that matches your blog's personality!</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+    <!-- Plain Theme (Default Active) -->
+<div class="relative group cursor-pointer bg-white dark:bg-slate-900 p-4 rounded-xl border-4 border-slate-300 dark:border-slate-700 hover:border-slate-400 transition-all">
+<div class="absolute -top-4 -right-4 bg-slate-800 text-white px-4 py-1 rounded-full font-black text-xs shadow-lg flex items-center gap-1 rotate-12 group-hover:rotate-0 transition-transform border-2 border-white">
+<span class="material-symbols-outlined text-sm">star</span> ACTIVE
+</div>
+<div class="h-40 rounded-lg bg-white dark:bg-slate-800 mb-4 overflow-hidden flex items-center justify-center relative">
+<div class="w-32 h-20 bg-white dark:bg-slate-900 rounded shadow-sm p-2 flex flex-col gap-2 scale-90 border border-slate-300 dark:border-slate-700">
+<div class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded"></div>
+<div class="w-2/3 h-2 bg-slate-200 dark:bg-slate-700 rounded"></div>
+<div class="mt-auto flex justify-between">
+<div class="size-4 rounded-full bg-slate-400"></div>
+<div class="w-10 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+</div>
+</div>
+</div>
+<h3 class="font-black text-slate-800 dark:text-slate-100">Plain</h3>
+<p class="text-xs font-bold text-slate-500">Minimal & Neutral</p>
+</div>
+<!-- Sunshine Theme -->
+<div class="relative group cursor-pointer bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border-4 border-transparent hover:border-amber-400 transition-all">
+<!--<div class="absolute -top-4 -right-4 bg-yellow-400 text-amber-900 px-4 py-1 rounded-full font-black text-xs shadow-lg flex items-center gap-1 rotate-12 group-hover:rotate-0 transition-transform border-2 border-white">-->
+<!--<span class="material-symbols-outlined text-sm">star</span> ACTIVE-->
+<!--                        </div>-->
+<div class="h-40 rounded-lg bg-gradient-to-br from-yellow-100 to-amber-200 mb-4 overflow-hidden flex items-center justify-center relative">
+<span class="material-symbols-outlined text-7xl text-amber-500 opacity-20 absolute -bottom-4 -left-4">wb_sunny</span>
+<div class="w-32 h-20 bg-white rounded shadow-sm p-2 flex flex-col gap-2 scale-90">
+<div class="w-full h-2 bg-amber-100 rounded"></div>
+<div class="w-2/3 h-2 bg-amber-100 rounded"></div>
+<div class="mt-auto flex justify-between">
+<div class="size-4 rounded-full bg-amber-400"></div>
+<div class="w-10 h-3 bg-amber-100 rounded"></div>
+</div>
+</div>
+</div>
+<h3 class="font-black text-amber-800 dark:text-amber-200">Sunshine</h3>
+<p class="text-xs font-bold text-amber-600 dark:text-amber-400">Bright &amp; Happy</p>
+</div>
+<!-- Midnight Theme -->
+<div class="group cursor-pointer bg-slate-100 dark:bg-slate-800 p-4 rounded-xl border-4 border-transparent hover:border-indigo-400 transition-all">
+<div class="h-40 rounded-lg bg-indigo-900 mb-4 overflow-hidden flex items-center justify-center relative">
+<span class="material-symbols-outlined text-7xl text-indigo-400/20 absolute -top-4 -right-4">bedtime</span>
+<div class="w-32 h-20 bg-slate-800 rounded shadow-sm p-2 flex flex-col gap-2 scale-90 border border-slate-700">
+<div class="w-full h-2 bg-indigo-500/30 rounded"></div>
+<div class="w-2/3 h-2 bg-indigo-500/30 rounded"></div>
+<div class="mt-auto flex justify-between">
+<div class="size-4 rounded-full bg-indigo-400"></div>
+<div class="w-10 h-3 bg-indigo-500/30 rounded"></div>
+</div>
+</div>
+</div>
+<h3 class="font-black text-slate-800 dark:text-slate-100">Midnight</h3>
+<p class="text-xs font-bold text-slate-500">Cozy &amp; Dark</p>
+</div>
+<!-- Ocean Breeze Theme -->
+<div class="group cursor-pointer bg-cyan-50 dark:bg-cyan-900/20 p-4 rounded-xl border-4 border-transparent hover:border-cyan-400 transition-all">
+<div class="h-40 rounded-lg bg-gradient-to-br from-cyan-100 to-teal-200 mb-4 overflow-hidden flex items-center justify-center relative">
+<span class="material-symbols-outlined text-7xl text-cyan-500/20 absolute -bottom-6 -right-2">bubble_chart</span>
+<div class="w-32 h-20 bg-white rounded shadow-sm p-2 flex flex-col gap-2 scale-90">
+<div class="w-full h-2 bg-cyan-100 rounded"></div>
+<div class="w-2/3 h-2 bg-cyan-100 rounded"></div>
+<div class="mt-auto flex justify-between">
+<div class="size-4 rounded-full bg-cyan-400"></div>
+<div class="w-10 h-3 bg-cyan-100 rounded"></div>
+</div>
+</div>
+</div>
+<h3 class="font-black text-cyan-800 dark:text-cyan-200">Ocean Breeze</h3>
+<p class="text-xs font-bold text-cyan-600">Calm &amp; Bubbly</p>
+</div>
+<!-- Cotton Candy Theme -->
+<div class="group cursor-pointer bg-pink-50 dark:bg-pink-900/20 p-4 rounded-xl border-4 border-transparent hover:border-pink-400 transition-all">
+<div class="h-40 rounded-lg bg-gradient-to-br from-pink-100 to-rose-200 mb-4 overflow-hidden flex items-center justify-center relative">
+<span class="material-symbols-outlined text-7xl text-pink-500/20 absolute -top-4 -left-4">cloud</span>
+<div class="w-32 h-20 bg-white rounded shadow-sm p-2 flex flex-col gap-2 scale-90">
+<div class="w-full h-2 bg-pink-100 rounded"></div>
+<div class="w-2/3 h-2 bg-pink-100 rounded"></div>
+<div class="mt-auto flex justify-between">
+<div class="size-4 rounded-full bg-pink-400"></div>
+<div class="w-10 h-3 bg-pink-100 rounded"></div>
+</div>
+</div>
+</div>
+<h3 class="font-black text-pink-800 dark:text-pink-200">Cotton Candy</h3>
+<p class="text-xs font-bold text-pink-600">Sweet &amp; Soft</p>
+</div>
+<!-- Forest Adventure Theme -->
+<div class="group cursor-pointer bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border-4 border-transparent hover:border-emerald-400 transition-all">
+<div class="h-40 rounded-lg bg-gradient-to-br from-emerald-100 to-green-200 mb-4 overflow-hidden flex items-center justify-center relative">
+<span class="material-symbols-outlined text-7xl text-emerald-500/20 absolute -bottom-4 left-10">eco</span>
+<div class="w-32 h-20 bg-white rounded shadow-sm p-2 flex flex-col gap-2 scale-90">
+<div class="w-full h-2 bg-emerald-100 rounded"></div>
+<div class="w-2/3 h-2 bg-emerald-100 rounded"></div>
+<div class="mt-auto flex justify-between">
+<div class="size-4 rounded-full bg-emerald-400"></div>
+<div class="w-10 h-3 bg-emerald-100 rounded"></div>
+</div>
+</div>
+</div>
+<h3 class="font-black text-emerald-800 dark:text-emerald-200">Forest Adventure</h3>
+<p class="text-xs font-bold text-emerald-600">Fresh &amp; Leafy</p>
+</div>
+</div>
+</div>
+<!-- Profile Settings Section -->
+<div class="pt-8 border-t border-primary/10">
+<div class="mb-8">
+<h2 class="text-3xl font-black tracking-tight mb-2">Profile Settings</h2>
+<p class="text-slate-500 dark:text-slate-400 font-medium">How the multiverse sees you!</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<div class="space-y-6">
+<div class="space-y-2">
+<label class="text-sm font-black uppercase tracking-wider text-slate-400">Display Name</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">face</span>
+<input class="w-full pl-12 pr-4 py-4 rounded-xl bg-white dark:bg-primary/10 border-4 border-primary/5 focus:border-primary focus:ring-0 font-bold text-slate-700 dark:text-slate-200 transition-all" type="text" value="BloggyMcBlogFace"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-black uppercase tracking-wider text-slate-400">Bio</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-4 text-primary">edit</span>
+<textarea class="w-full pl-12 pr-4 py-4 rounded-xl bg-white dark:bg-primary/10 border-4 border-primary/5 focus:border-primary focus:ring-0 font-bold text-slate-700 dark:text-slate-200 transition-all" rows="4">Just a cartoon character in a digital world writing about my favorite doodle adventures!</textarea>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<label class="text-sm font-black uppercase tracking-wider text-slate-400">Customize Your Avatar</label>
+<div class="bg-primary/5 dark:bg-primary/10 p-6 rounded-xl border-4 border-dashed border-primary/20 flex flex-col items-center gap-6">
+<div class="size-32 rounded-full border-4 border-white dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-xl" data-alt="Main character avatar preview" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCKXlwHSuNbuxtgh56fDZvasLAmzBuCf7SdFF0ZjdmRV8mlKMCQB8UeKSdkeO2gdjOy1LU0wDTZDEDdJ4fuCZicRpBP6RQC7lffMfukS3ws2q6PpIHTAxNGideBOzr6nMGNaRm0jv9b6eEnSxwY64d1iHVOkzCjxsBaq2EFzGpZfeu5Ne7PK4YdVVsq2DyalXk3VRzjKddVndOxt5sBs795ebzlzMpNWmswYgploFykHPNWFrUhyvvED6wnU_YTjU6J75Cpjyybww')"></div>
+<div class="grid grid-cols-4 gap-4">
+<button class="size-12 rounded-lg bg-white dark:bg-slate-800 border-2 border-primary/20 hover:border-primary flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-primary">mood</span>
+</button>
+<button class="size-12 rounded-lg bg-white dark:bg-slate-800 border-2 border-primary/20 hover:border-primary flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-primary">eyeglasses</span>
+</button>
+<button class="size-12 rounded-lg bg-white dark:bg-slate-800 border-2 border-primary/20 hover:border-primary flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-primary">checkroom</span>
+</button>
+<button class="size-12 rounded-lg bg-white dark:bg-slate-800 border-2 border-primary/20 hover:border-primary flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-primary">palette</span>
+</button>
+</div>
+<p class="text-xs font-bold text-primary/60">Choose your face parts above!</p>
+</div>
+</div>
+</div>
+<div class="mt-12 flex justify-end">
+<button class="bg-primary text-white text-xl font-black px-12 py-5 rounded-full border-b-8 border-white dark:border-slate-800 shadow-2xl hover:translate-y-1 hover:border-b-4 transition-all active:translate-y-2 active:border-b-0">
+                        SAVE CHANGES
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<footer class="max-w-7xl mx-auto p-12 text-center">
+<div class="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-background-dark rounded-full shadow-sm border border-primary/10">
+<span class="text-slate-400 font-bold text-sm">Made with </span>
+<span class="material-symbols-outlined text-primary scale-125">favorite</span>
+<span class="text-slate-400 font-bold text-sm"> by the BlogVerse Team</span>
+</div>
+</footer>
+
+```</body></html>

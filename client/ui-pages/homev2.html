@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BlogVerse | Your Stories, Hand-Drawn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-on-surface": "#9f9ca2",
+                        "surface-container-low": "#f4eff7",
+                        "primary-fixed-dim": "#b473ff",
+                        "tertiary-fixed-dim": "#54eed8",
+                        "on-secondary": "#ffefef",
+                        "inverse-surface": "#0e0e12",
+                        "primary-container": "#be86ff",
+                        "primary-fixed": "#be86ff",
+                        "surface-bright": "#faf5fc",
+                        "on-tertiary": "#c1fff2",
+                        "inverse-primary": "#b26fff",
+                        "on-surface-variant": "#5d5a60",
+                        "surface": "#faf5fc",
+                        "on-tertiary-container": "#005e54",
+                        "outline-variant": "#afacb2",
+                        "surface-container-highest": "#e0dbe4",
+                        "on-primary-fixed-variant": "#41007a",
+                        "error-container": "#f74b6d",
+                        "secondary-fixed": "#ffc2c7",
+                        "tertiary": "#00675c",
+                        "on-secondary-fixed": "#6e0020",
+                        "error-dim": "#a70138",
+                        "tertiary-dim": "#005a50",
+                        "primary-dim": "#7100cd",
+                        "on-background": "#2f2e33",
+                        "surface-dim": "#d7d3dc",
+                        "surface-variant": "#e0dbe4",
+                        "error": "#b41340",
+                        "tertiary-fixed": "#65fde6",
+                        "secondary-dim": "#a20034",
+                        "on-error": "#ffefef",
+                        "on-secondary-fixed-variant": "#a40034",
+                        "secondary": "#b8003c",
+                        "secondary-fixed-dim": "#ffaeb5",
+                        "surface-container-high": "#e5e1e9",
+                        "surface-tint": "#8013e2",
+                        "surface-container": "#ebe6ef",
+                        "primary": "#8013e2",
+                        "outline": "#78767c",
+                        "background": "#faf5fc",
+                        "secondary-container": "#ffc2c7",
+                        "on-secondary-container": "#92002e",
+                        "on-error-container": "#510017",
+                        "tertiary-container": "#65fde6",
+                        "on-tertiary-fixed-variant": "#00695e",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#000000",
+                        "on-surface": "#2f2e33",
+                        "on-primary": "#faefff",
+                        "on-tertiary-fixed": "#004a41",
+                        "on-primary-container": "#340064"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Plus Jakarta Sans"],
+                        "label": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .bouncy-hover:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 8px 8px 0px 0px rgba(47, 46, 51, 1);
+        }
+        .sketch-border {
+            border: 3px solid #2f2e33;
+        }
+        .bouncy-shadow {
+            box-shadow: 4px 4px 0px 0px rgba(47, 46, 51, 1);
+        }
+        .jitter-vowel {
+            display: inline-block;
+            transform: translateY(-2px) rotate(-2deg);
+        }
+        .rotate-slight {
+            transform: rotate(-1deg);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden">
+<!-- Navigation Shell -->
+<nav class="sticky top-0 w-full z-50 bg-[#faf5fc]/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[4px_4px_0px_0px_rgba(47,46,51,0.1)] transition-all">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-black text-[#8c2bee] dark:text-[#be86ff] italic hover:rotate-2 transition-transform cursor-pointer">
+                BlogVerse
+            </div>
+<div class="hidden md:flex items-center space-gap-8 font-['Plus_Jakarta_Sans'] font-medium text-sm tracking-wide gap-8">
+<a class="text-[#2f2e33] dark:text-[#faf5fc] opacity-70 hover:text-[#8c2bee] hover:scale-105 transition-all duration-300" href="#">Explore</a>
+<a class="text-[#2f2e33] dark:text-[#faf5fc] opacity-70 hover:text-[#8c2bee] hover:scale-105 transition-all duration-300" href="#">Creators</a>
+<a class="text-[#2f2e33] dark:text-[#faf5fc] opacity-70 hover:text-[#8c2bee] hover:scale-105 transition-all duration-300" href="#">Stories</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 font-bold text-on-surface hover:text-primary transition-colors">Login</button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-full font-bold sketch-border bouncy-shadow bouncy-hover transition-all">
+                    Sign Up
+                </button>
+</div>
+</div>
+</nav>
+<main>
+<!-- Hero Section -->
+<section class="relative px-8 py-20 md:py-32 max-w-screen-2xl mx-auto overflow-hidden">
+<!-- Decorative Doodles -->
+<span class="material-symbols-outlined absolute top-20 left-10 text-primary-container/30 text-6xl rotate-12 -z-10" data-icon="edit">edit</span>
+<span class="material-symbols-outlined absolute bottom-20 right-10 text-secondary-container/40 text-8xl -rotate-12 -z-10" data-icon="draw">draw</span>
+<div class="grid md:grid-cols-2 gap-12 items-center">
+<div class="space-y-8">
+<h1 class="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight text-on-surface">
+                        Your Pencils are <span class="text-primary italic">Waiting</span> to <span class="jitter-vowel">Talk</span> Back!
+                    </h1>
+<p class="text-xl text-on-surface-variant max-w-lg leading-relaxed">
+                        Step into a living sketchbook where your words breathe. Whether it's a secret diary or a shared saga, your stories deserve a home made of magic and ink.
+                    </p>
+<div class="flex flex-wrap gap-4 pt-4">
+<button class="px-8 py-4 bg-primary text-on-primary rounded-full text-lg font-black sketch-border bouncy-shadow bouncy-hover transition-all">
+                            Get Your Free Journal
+                        </button>
+<button class="px-8 py-4 bg-surface-container-lowest text-on-surface rounded-full text-lg font-black sketch-border bouncy-shadow bouncy-hover transition-all">
+                            Login
+                        </button>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute inset-0 bg-primary-container rounded-xl rotate-3 -z-10 transition-transform group-hover:rotate-6"></div>
+<img alt="Person writing in a sketchbook" class="w-full aspect-[4/3] object-cover rounded-xl sketch-border grayscale hover:grayscale-0 transition-all duration-500" data-alt="Illustration-style photo of a person's hands holding a fountain pen over a textured paper sketchbook with colorful ink splatters and whimsical doodles" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzPJZeTuskhHidG-RMM1szhzzkNhTX3ZmTCo56LyzHIg3_k-ywlCNERltHmsfG4_bceAGX4Gdm_onfwDnGNHHq22uVzjvJzryGEt6zMNJkaGQ-8Bstfic_KaOkt01G4NQo6LvPAmeIcTdtV3a_zOv9czn5Nn3gBN3EakLmDkPorZF_LqzI3ZMqJG_5nMdaPwACK3g9SCEz55ibUlGfqliWPwjC41Hqp3yEAHja06ppP9Uo2Ct8lrPk_DViP0t_Pntg1We1AsZ1N2ol"/>
+<div class="absolute -bottom-6 -right-6 bg-secondary-container p-4 sketch-border bouncy-shadow rotate-3 hidden md:block">
+<p class="font-bold text-on-secondary-container">Start Your Verse Today! ✨</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Platform Highlights -->
+<section class="py-24 bg-surface-container-low px-8">
+<div class="max-w-screen-2xl mx-auto">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-bold mb-4">The Magic in Our Inkwell</h2>
+<div class="w-24 h-2 bg-primary mx-auto rounded-full"></div>
+</div>
+<div class="grid md:grid-cols-3 gap-12">
+<!-- Card 1: Connect -->
+<div class="bg-surface-container-lowest p-8 rounded-xl sketch-border bouncy-shadow bouncy-hover transition-all rotate-slight">
+<div class="w-16 h-16 bg-tertiary-container rounded-full flex items-center justify-center mb-6 sketch-border">
+<span class="material-symbols-outlined text-on-tertiary-container text-3xl" data-icon="groups">groups</span>
+</div>
+<h3 class="text-2xl font-bold mb-4">Connect</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                            Find your tribe in a cozy community of poets, dreamers, and casual doodlers. Shared stories feel better.
+                        </p>
+</div>
+<!-- Card 2: Private Journals -->
+<div class="bg-surface-container-lowest p-8 rounded-xl sketch-border bouncy-shadow bouncy-hover transition-all -rotate-1">
+<div class="w-16 h-16 bg-secondary-container rounded-full flex items-center justify-center mb-6 sketch-border">
+<span class="material-symbols-outlined text-on-secondary-container text-3xl" data-icon="lock">lock</span>
+</div>
+<h3 class="text-2xl font-bold mb-4">Private Journals</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                            A locked room for your late-night thoughts. High-end privacy meets the charm of a physical diary.
+                        </p>
+</div>
+<!-- Card 3: Explore -->
+<div class="bg-surface-container-lowest p-8 rounded-xl sketch-border bouncy-shadow bouncy-hover transition-all rotate-1">
+<div class="w-16 h-16 bg-primary-container rounded-full flex items-center justify-center mb-6 sketch-border">
+<span class="material-symbols-outlined text-on-primary-container text-3xl" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<h3 class="text-2xl font-bold mb-4">Explore AI Verse</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                            Read whimsical tales generated by AI personalities like "Scribble the Squirrel" or "Ink the Octopus."
+                        </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Feature Showcase (Bento Style) -->
+<section class="py-24 px-8 max-w-screen-2xl mx-auto">
+<h2 class="text-4xl font-black mb-12 text-center md:text-left">What's in the Inkwell?</h2>
+<div class="grid md:grid-cols-4 gap-6">
+<div class="md:col-span-2 bg-primary text-on-primary p-10 rounded-xl sketch-border flex flex-col justify-end min-h-[300px] relative overflow-hidden group">
+<span class="material-symbols-outlined absolute -top-4 -right-4 text-[12rem] opacity-10 group-hover:scale-110 transition-transform" data-icon="menu_book">menu_book</span>
+<h4 class="text-3xl font-bold mb-2">Collaborative Storytelling</h4>
+<p class="opacity-90">Jump into a canvas with friends and build universes one sentence at a time.</p>
+</div>
+<div class="bg-tertiary-container p-8 rounded-xl sketch-border text-on-tertiary-container hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-4xl mb-4" data-icon="brush">brush</span>
+<h4 class="text-xl font-bold mb-2">Custom Doodles</h4>
+<p class="text-sm">Personalize every post with hand-drawn motifs.</p>
+</div>
+<div class="bg-secondary-container p-8 rounded-xl sketch-border text-on-secondary-container hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-4xl mb-4" data-icon="history_edu">history_edu</span>
+<h4 class="text-xl font-bold mb-2">Ink History</h4>
+<p class="text-sm">Rewind time and see how your story evolved.</p>
+</div>
+<div class="md:col-span-2 bg-surface-container p-8 rounded-xl sketch-border flex items-center gap-6">
+<div class="w-24 h-24 flex-shrink-0 bg-white rounded-lg sketch-border flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-primary" data-icon="draw">draw</span>
+</div>
+<div>
+<h4 class="text-xl font-bold mb-1">Sketchpad Mode</h4>
+<p class="text-on-surface-variant">Don't just write—draw your diagrams and feelings directly on the page.</p>
+</div>
+</div>
+<div class="md:col-span-2 bg-surface-container-low p-8 rounded-xl sketch-border border-dashed">
+<h4 class="text-xl font-bold mb-4">Featured Daily Prompt</h4>
+<div class="bg-white p-4 rounded-lg sketch-border">
+<p class="italic">"If you were a raindrop, where would you want to land first?"</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Social Proof: Star Authors -->
+<section class="py-24 bg-background px-8 border-y-4 border-dashed border-outline-variant/30">
+<div class="max-w-screen-xl mx-auto text-center">
+<h2 class="text-3xl font-bold mb-12">The Hall of Fame</h2>
+<div class="flex flex-wrap justify-center gap-10">
+<div class="flex flex-col items-center gap-3 group">
+<img alt="Star Author" class="w-24 h-24 rounded-full sketch-border bouncy-shadow group-hover:-translate-y-2 transition-transform" data-alt="Close-up portrait of a woman with curly hair and glasses in warm, artistic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmWSRIYM83QcI2JYQrIfNXydt-N1k--FBQOhQBuAHxldLNOl2OnZbThQgc0hIS1MSNvp-qDGSo4AKvOKUfEa1TrBu2ggHhMHdH4XX1HKOAwJIRQIJy0ghQgxPdRwpqs7JluE4Iqij52zbEKO6J94pAo4EQ_iKHzX5LZjvFbDb3XBalMn3IwZTWW-68c7RYqudtWxK8sknm4D7dTIJmnPOh2EKnj6QU-5Fy7Tep4cq6yr2v_mpn1sR-DB87lOPX-V9Co6weY5xq-FHk"/>
+<span class="font-bold text-sm">@LylaWrites</span>
+<div class="flex gap-1 text-secondary">
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-3 group">
+<img alt="Star Author" class="w-24 h-24 rounded-full sketch-border bouncy-shadow group-hover:-translate-y-2 transition-transform" data-alt="Portrait of a creative man with a beard wearing a beanie, sitting in a sunlit art studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBemwmxPbhwQ4dQkj5vzB_mPZQRBa4EDzWP9k3vaWShlXf5XW09dDC-3h68gTnElpvVJDEK9ZG5Pj7IKzNL2YpsSbKryW0KZtWdOu9QgfatS_CisiqNzpD6s0uDhezIjXuAYsChFkYDwG1HhW1tKwn0hQtlHpXnArLG_4_9erVEy31kpQXHXfMjw2ARJDNttEZ_E9wG6hQVYF77PYmeBZNVdAa1G98Ic5DVfeQH9rrb5lzJ0eQl2EkVwnrsdYC0-6XJ9nuTaBXCh6FJ"/>
+<span class="font-bold text-sm">@InkMaster_Ben</span>
+<div class="flex gap-1 text-secondary">
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-3 group">
+<img alt="Star Author" class="w-24 h-24 rounded-full sketch-border bouncy-shadow group-hover:-translate-y-2 transition-transform" data-alt="Smiling woman in a denim jacket against a colorful mural background, laughing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbLzm1U9oO-C6CY8rne1xKnS99f-hiCsrbW125ovVLMbjsFdmiqLYuZobwFnGOX22d0xi6_gkQRIMOGg8HR2YiC436_UdIs9KPsyj30vsXcppdx5jHo1Dd8nBr_4Wxoe4UJDByrzCsR6SaRvc3sQOE3EPTnfQ5FEz3YhAoae8p8vstaTyuV8hk1bkySq6tOtSfZ9nF7XQxLR5FOajlogQVZ2AFGEjAl5lHNqH1V3hYiXYkeYn-LawrKAVlvvty3_B-jdtRSrmRBSQ4"/>
+<span class="font-bold text-sm">@ScribbleSiri</span>
+<div class="flex gap-1 text-secondary">
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="py-32 px-8">
+<div class="max-w-screen-md mx-auto bg-surface-container-low rounded-xl p-12 text-center sketch-border bouncy-shadow relative overflow-hidden">
+<span class="material-symbols-outlined absolute -bottom-8 -left-8 text-9xl text-primary/10 rotate-45" data-icon="stylus">stylus</span>
+<h2 class="text-4xl md:text-5xl font-black mb-6">Don't Let Your Stories Dry Up!</h2>
+<p class="text-lg text-on-surface-variant mb-10 leading-relaxed">
+                    The ink is fresh and the paper is ready. Join thousands of creators in the Verse and start your journey today.
+                </p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center">
+<button class="px-12 py-5 bg-secondary text-on-secondary rounded-full text-xl font-black sketch-border bouncy-shadow bouncy-hover transition-all">
+                        Sign Up Now
+                    </button>
+<button class="px-12 py-5 bg-surface-container-lowest text-on-surface rounded-full text-xl font-black sketch-border bouncy-shadow bouncy-hover transition-all">
+                        Tour the Verse
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full rounded-t-[3rem] mt-20 bg-[#f4eff7] dark:bg-slate-950 border-t-4 border-dashed border-[#2f2e33]/20">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-12 px-12 py-16 max-w-screen-2xl mx-auto font-['Plus_Jakarta_Sans'] text-body-lg leading-relaxed">
+<div class="col-span-2">
+<div class="text-xl font-bold text-[#2f2e33] dark:text-[#faf5fc] mb-6">BlogVerse</div>
+<p class="max-w-xs text-on-surface-variant">Creating a world where every word matters and every doodle tells a story. Join the movement.</p>
+<div class="mt-8 flex gap-4">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="alternate_email">alternate_email</span>
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="podcasts">podcasts</span>
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="news">news</span>
+</div>
+</div>
+<div class="space-y-4">
+<h5 class="font-bold text-on-surface">Ecosystem</h5>
+<ul class="space-y-2">
+<li><a class="text-[#2f2e33] dark:text-[#faf5fc] hover:text-[#8c2bee] hover:translate-x-1 transition-transform inline-block" href="#">About Us</a></li>
+<li><a class="text-[#2f2e33] dark:text-[#faf5fc] hover:text-[#8c2bee] hover:translate-x-1 transition-transform inline-block" href="#">Guidelines</a></li>
+<li><a class="text-[#2f2e33] dark:text-[#faf5fc] hover:text-[#8c2bee] hover:translate-x-1 transition-transform inline-block" href="#">Support</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h5 class="font-bold text-on-surface">Legal</h5>
+<ul class="space-y-2">
+<li><a class="text-[#2f2e33] dark:text-[#faf5fc] hover:text-[#8c2bee] hover:translate-x-1 transition-transform inline-block" href="#">Privacy</a></li>
+<li><a class="text-[#2f2e33] dark:text-[#faf5fc] hover:text-[#8c2bee] hover:translate-x-1 transition-transform inline-block" href="#">Terms</a></li>
+<li><a class="text-[#2f2e33] dark:text-[#faf5fc] hover:text-[#8c2bee] hover:translate-x-1 transition-transform inline-block" href="#">Careers</a></li>
+</ul>
+</div>
+<div class="col-span-full pt-12 text-center text-sm opacity-60">
+                © 2024 BlogVerse. Crafted with magic and ink.
+            </div>
+</div>
+</footer>
+</body></html>
