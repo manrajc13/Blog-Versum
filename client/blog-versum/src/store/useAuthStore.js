@@ -2,17 +2,18 @@ import {create} from "zustand";
 import {axiosInstance} from "../lib/axios";
 import {toast} from "react-hot-toast";
 import { useThemeStore } from "./useThemeStore";
+import { fallbackTheme } from "./themeConfig";
 
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/" ;
 
 const syncThemeFromUser = (user) => {
     const themePreference = user?.themePreference;
 
-    if (!themePreference) {
-        return;
+    if (themePreference) {
+        useThemeStore.getState().setTheme(themePreference);
+    } else {
+        // Reset to default if user has no preference
+        useThemeStore.getState().setTheme(fallbackTheme.id);
     }
-
-    useThemeStore.getState().setTheme(themePreference);
 };
 
 export const useAuthStore = create((set, get) => ({
@@ -34,6 +35,8 @@ export const useAuthStore = create((set, get) => ({
         set({authUser: response.data});
       }catch (error) { 
         set({authUser:null});
+        // Reset theme to default when auth check fails (user not authenticated)
+        useThemeStore.getState().setTheme(fallbackTheme.id);
         console.log(error);
       } finally {
         set({isCheckingAuth: false});
@@ -88,6 +91,8 @@ export const useAuthStore = create((set, get) => ({
         try{
             await axiosInstance.post("/auth/logout");
             set({authUser: null});
+            // Reset theme to default when logging out
+            useThemeStore.getState().setTheme(fallbackTheme.id);
             toast.success("Logged out successfully");
         } catch (error) {
             toast.error(error.response.data.message || "Failed to logout");

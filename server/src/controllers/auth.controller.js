@@ -89,6 +89,7 @@ export const login = async (req, res) => {
             avatar: user.avatar,
             bio: user.bio,
             interests: user.interests,
+            themePreference: user.themePreference,
         });
     } catch (error) {
         console.log("Error in login controller", error.message);
