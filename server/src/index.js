@@ -19,6 +19,8 @@ const PORT = process.env.PORT;
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 // // Force IPv4 DNS resolution — fixes ENETUNREACH on Render (IPv6 not routable)
 // dns.setDefaultResultOrder('ipv4first');
 
