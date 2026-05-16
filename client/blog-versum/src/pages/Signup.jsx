@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SocialAuthButtons from '../components/SocialAuthButtons'
-import EmailVerificationCard from '../components/EmailVerificationCard'
 import PageDoodles from '../components/shared/PageDoodles'
 import { useAuthStore } from "../store/useAuthStore";
 import {toast} from "react-hot-toast";
@@ -9,11 +8,8 @@ import {Loader2} from "lucide-react";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const [showVerification, setShowVerification] = useState(false);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
-  const {signup, sendOTP, verifyOTP, login, isSigningUp} = useAuthStore();
+  const {signup, login, isSigningUp} = useAuthStore();
 
     const [formData, setformData] = useState({
         fullname: "",
@@ -50,65 +46,23 @@ export default function Signup() {
         try {
           const signupSuccess = await signup(formData);
           if (!signupSuccess) {
-            setShowVerification(false);
             return;
           }
 
-          setIsSendingOtp(true);
-          const otpSent = await sendOTP({
+          // After successful signup, login and go to onboarding
+          const loggedIn = await login({
             username: formData.username,
-            email: formData.email,
-          });
+            password: formData.password,
+          }, { silent: true });
 
-          if (otpSent) {
-            setShowVerification(true);
-          } else {
-            setShowVerification(false);
+          if (loggedIn) {
+            navigate('/onboarding');
           }
         } catch (error) {
           console.error("Signup failed:", error);
-          setShowVerification(false);
-        } finally {
-          setIsSendingOtp(false);
         }
     }
   }
-
-  const handleResendOtp = async () => {
-    return await sendOTP({
-      username: formData.username,
-      email: formData.email,
-    });
-  };
-
-  const handleVerifyOtp = async (otp) => {
-    setIsVerifyingOtp(true);
-    try {
-      const verified = await verifyOTP({ username: formData.username, otp }, { silent: true });
-      if (!verified) {
-        return false;
-      }
-
-      const loggedIn = await login({
-        username: formData.username,
-        password: formData.password,
-      }, { silent: true });
-
-      if (loggedIn) {
-        navigate('/onboarding');
-        return true;
-      }
-
-      return false;
-    }
-    catch (error) {
-      console.error("OTP verification failed:", error);
-      return false;
-    }
-    finally {
-      setIsVerifyingOtp(false);
-    }
-  };
 
   return (
     <div className="layout-container flex h-full grow flex-col min-h-screen bg-[#f7f5f8] dark:bg-[#1b1022] font-display relative">
@@ -175,19 +129,6 @@ export default function Signup() {
 
           {/* Right Panel — Sign Up Form / Verification */}
           <div className="bg-white dark:bg-slate-800 p-8 md:p-12 rounded-lg shadow-2xl border-b-8 border-r-8 border-primary/20">
-            {isSendingOtp || isVerifyingOtp ? (
-              <div className="min-h-[420px] flex flex-col items-center justify-center text-center space-y-4">
-                <Loader2 className="size-12 text-primary animate-spin" />
-                <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                  {isSendingOtp ? "Sending OTP..." : "Verifying OTP..."}
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400">
-                  {isSendingOtp
-                    ? "Please wait while we prepare your verification step."
-                    : "Please wait while we verify your code and sign you in."}
-                </p>
-              </div>
-            ) : !showVerification ? (
               <>
                 <div className="mb-8">
                   <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 mb-2">Create Account</h2>
@@ -277,28 +218,12 @@ export default function Signup() {
                   <a className="text-primary hover:underline" href="#">Ink Policy</a>.
                 </p>
               </>
-            ) : (
-              <div className="space-y-6">
-                <EmailVerificationCard
-                  email={formData.email}
-                  onResend={handleResendOtp}
-                  onVerify={handleVerifyOtp}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowVerification(false)}
-                  className="w-full py-3 rounded-xl border-2 border-primary/20 text-primary font-bold hover:bg-primary/10 transition-all"
-                >
-                  Back to Sign Up Form
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </main>
 
       <footer className="py-10 text-center text-slate-400 text-sm">
-        <p>© 2024 BlogVerse. Crafted with ✏️ and lots of 💜</p>
+        <p>© 2026 BlogVerse. Crafted with ✏️ and lots of 💜</p>
       </footer>
     </div>
   )

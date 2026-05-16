@@ -2,17 +2,18 @@ import {create} from "zustand";
 import {axiosInstance} from "../lib/axios";
 import {toast} from "react-hot-toast";
 import { useThemeStore } from "./useThemeStore";
+import { fallbackTheme } from "./themeConfig";
 
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/" ;
 
 const syncThemeFromUser = (user) => {
     const themePreference = user?.themePreference;
 
-    if (!themePreference) {
-        return;
+    if (themePreference) {
+        useThemeStore.getState().setTheme(themePreference);
+    } else {
+        // Reset to default if user has no preference
+        useThemeStore.getState().setTheme(fallbackTheme.id);
     }
-
-    useThemeStore.getState().setTheme(themePreference);
 };
 
 export const useAuthStore = create((set, get) => ({
@@ -34,6 +35,8 @@ export const useAuthStore = create((set, get) => ({
         set({authUser: response.data});
       }catch (error) { 
         set({authUser:null});
+        // Reset theme to default when auth check fails (user not authenticated)
+        useThemeStore.getState().setTheme(fallbackTheme.id);
         console.log(error);
       } finally {
         set({isCheckingAuth: false});
@@ -84,35 +87,12 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    sendOTP: async (data) => {
-        try{
-            const response = await axiosInstance.post("/auth/send-otp", data);
-            toast.success(response.data.message || "OTP sent successfully");
-            return true;
-        } catch (error) {
-            toast.error(error.response.data.message || "Failed to send OTP");
-            return false;
-        } 
-    },
-
-    verifyOTP: async (data, options = {}) => {
-        const { silent = false } = options;
-        try{
-            const response = await axiosInstance.post("/auth/verify-email", data);
-            if (!silent) {
-                toast.success(response.data.message || "Email verified successfully");
-            }
-            return true;
-        } catch (error) {
-            toast.error(error.response.data.message || "Failed to verify email");
-            return false;
-        }
-    },
-
     logout: async () => {
         try{
             await axiosInstance.post("/auth/logout");
             set({authUser: null});
+            // Reset theme to default when logging out
+            useThemeStore.getState().setTheme(fallbackTheme.id);
             toast.success("Logged out successfully");
         } catch (error) {
             toast.error(error.response.data.message || "Failed to logout");
@@ -131,10 +111,6 @@ export const useAuthStore = create((set, get) => ({
             }
             return true;
         } catch (error) {
-            // If it's a 403 verification error, throw it so Login.jsx can handle verification flow
-            if (error.response?.status === 403 && error.response?.data?.message?.includes("not verified")) {
-                throw error;
-            }
             toast.error(error.response.data.message || "Failed to login");
             return false;
         } finally {

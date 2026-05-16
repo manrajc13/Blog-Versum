@@ -26,22 +26,9 @@ const userSchema = new mongoose.Schema(
         type: String
     },
 
-    isVerified: {
-        type: Boolean,
-        default: false
-    },
-
     isPrivate: {
         type: Boolean,
         default: false
-    }, 
-    
-    emailOTP: {
-        type: String
-    },
-
-    otpExpires: {
-        type: Date
     },
 
     avatar: {

@@ -194,30 +194,25 @@ export default function ThemeSection({ theme }) {
       </div>
 
       <div
-        className="rounded-2xl border-2 px-6 py-4 text-lg font-bold"
+        className="rounded-2xl border-2 px-6 py-4 text-lg font-bold flex items-center gap-3"
         style={{
           borderColor: hexToRgba(theme.primary, 0.26),
           backgroundColor: hexToRgba(theme.primary, 0.08),
           color: '#7a2451',
         }}
       >
-        <span className="mr-2">🎨</span>
-        Active theme: <span style={{ color: theme.primary }}>{themeConfig[themeId].label}</span> - saved automatically to your browser!
+        {isUpdatingTheme ? (
+          <>
+            <Loader className="size-5 animate-spin" style={{ color: theme.primary }} />
+            <span>Updating theme to <span style={{ color: theme.primary }}>{pendingThemeName || themeConfig[themeId].label}</span>...</span>
+          </>
+        ) : (
+          <>
+            <span>🎨</span>
+            <span>Active theme: <span style={{ color: theme.primary }}>{themeConfig[themeId].label}</span> - saved automatically to your browser!</span>
+          </>
+        )}
       </div>
-
-      {isUpdatingTheme && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(15, 23, 42, 0.28)' }}
-        >
-          <div className="rounded-2xl px-8 py-6 bg-white shadow-xl border-2 border-slate-200 flex items-center gap-4">
-            <Loader className="size-8 animate-spin" style={{ color: theme.primary }} />
-            <p className="text-lg font-bold text-slate-800">
-              Updating theme to {pendingThemeName || themeConfig[themeId].label}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
