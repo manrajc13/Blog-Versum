@@ -205,6 +205,7 @@ export const sendOTP = async (req, res) => {
         await sendOTPEmail(userEmail, otp.plainOTP);
         res.status(200).json({ message: "OTP sent successfully" });
     } catch (err) {
+        console.error("Error in sendOTP controller:", err);
         res.status(500).json({ message: err.message });
     }
 };
