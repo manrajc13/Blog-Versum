@@ -4,6 +4,8 @@ import toast from 'react-hot-toast'
 import { hexToRgba } from '../../../store/themeConfig'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { DEFAULT_AVATAR_URL } from '../../../lib/defaultAvatar'
+import { createPortal } from 'react-dom'
+
 
 export default function ProfileSection({ theme }) {
   const { gettingProfileInfo, getProfileInfo, updateProfileSection, isUpdatingProfileSection } = useAuthStore()
@@ -164,25 +166,27 @@ export default function ProfileSection({ theme }) {
         </div>
       </div>
 
-      {gettingProfileInfo && (
+      {gettingProfileInfo && createPortal(
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center"
+          className="fixed inset-0 z-[1000] flex items-center justify-center"
           style={{ backgroundColor: 'rgba(15, 23, 42, 0.2)' }}
         >
           <Loader className="size-10 animate-spin" style={{ color: theme.primary }} />
-        </div>
+        </div>,
+        document.body
       )}
 
-      {isUpdatingProfileSection && (
+      {isUpdatingProfileSection && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="fixed inset-0 z-[1000] flex items-center justify-center"
           style={{ backgroundColor: 'rgba(15, 23, 42, 0.28)' }}
         >
           <div className="rounded-2xl px-8 py-6 bg-white shadow-xl border-2 border-slate-200 flex items-center gap-4">
             <Loader className="size-8 animate-spin" style={{ color: theme.primary }} />
             <p className="text-lg font-bold text-slate-800">Updating Profile...</p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

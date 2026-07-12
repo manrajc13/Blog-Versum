@@ -1,5 +1,6 @@
 import toast from 'react-hot-toast'
 import { Loader } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { useState } from 'react'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { useThemeStore } from '../../../store/useThemeStore'
@@ -205,9 +206,9 @@ export default function ThemeSection({ theme }) {
         Active theme: <span style={{ color: theme.primary }}>{themeConfig[themeId].label}</span> - saved automatically to your browser!
       </div>
 
-      {isUpdatingTheme && (
+      {isUpdatingTheme && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="fixed inset-0 z-[1000] flex items-center justify-center"
           style={{ backgroundColor: 'rgba(15, 23, 42, 0.28)' }}
         >
           <div className="rounded-2xl px-8 py-6 bg-white shadow-xl border-2 border-slate-200 flex items-center gap-4">
@@ -216,7 +217,8 @@ export default function ThemeSection({ theme }) {
               Updating theme to {pendingThemeName || themeConfig[themeId].label}
             </p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

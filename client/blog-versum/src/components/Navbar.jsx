@@ -17,6 +17,7 @@ export default function Navbar({
   navLinks = defaultNavLinks,
   iconColor = '#8c2bee',
   activeLink = null,
+  notification_active = false,
   onNotificationClick,
   profileInfo,
   avatarUrl = DEFAULT_AVATAR_URL,
@@ -149,7 +150,9 @@ export default function Navbar({
             onClick={onNotificationClick}
           >
             <span className="material-symbols-outlined" style={{ color: iconColor }}>notifications</span>
-            <div className="absolute -top-1 -right-1 bg-accent-orange w-3 h-3 rounded-full border-2 border-white"></div>
+            {notification_active && (
+              <div className="absolute -top-1 -right-1 bg-accent-orange w-3 h-3 rounded-full border-2 border-white"></div>
+            )}
           </button>
 
           {/* User Avatar + Profile popover */}

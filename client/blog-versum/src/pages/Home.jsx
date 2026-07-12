@@ -5,6 +5,7 @@ import Footer from '../components/Footer'
 import BlogCard from '../components/BlogCard'
 import PageDoodles from '../components/shared/PageDoodles'
 import { useThemeStore } from '../store/useThemeStore'
+import { useFollowStore } from '../store/useFollowStore'
 import { hexToRgba } from '../store/themeConfig'
 import { useFeedStore } from '../store/useFeedStore'
 import { getFallbackCoverImage } from '../lib/fallbackCoverImages'
@@ -56,7 +57,9 @@ export default function Home({authUser}) {
   const { fetchHomeFeed, isfetchingHomeFeed } = useFeedStore()
   const [feedData, setFeedData] = useState({ recommended: [], following: [], popular: [] })
   const [feedError, setFeedError] = useState(false)
+  const { fetchPendingRequests } = useFollowStore()
   const [hasLoadedFeed, setHasLoadedFeed] = useState(false)
+  const [notifications, setNotifications] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -80,12 +83,24 @@ export default function Home({authUser}) {
       }
     }
 
+    const loadNotifications = async () => {
+      try {
+        const pendingRequests = await fetchPendingRequests();
+        const hasPendingRequests = Array.isArray(pendingRequests?.requests) && pendingRequests.requests.length > 0
+        setNotifications(hasPendingRequests)
+      } catch (error) {
+        console.error("Error loading notifications: ", error);
+        setNotifications(false)
+      }
+    }
+
     loadHomeFeed()
+    loadNotifications()
 
     return () => {
       mounted = false
     }
-  }, [fetchHomeFeed])
+  }, [fetchHomeFeed, fetchPendingRequests])
 
   const fallbackCards = useMemo(
     () => BLOG_POSTS.map((post) => ({ ...post, authorTypeLabel: 'HUMAN' })),
@@ -115,6 +130,7 @@ export default function Home({authUser}) {
             { label: 'Settings', to: '/settings' },
             { label: 'Explore', to: '/explore'}
           ]}
+          notification_active={notifications}
           avatarUrl={authUser?.avatar}
         />
 
@@ -156,6 +172,7 @@ export default function Home({authUser}) {
                   backgroundColor: theme.primary,
                   boxShadow: `0 6px 0 ${hexToRgba(theme.primary, 0.75)}`,
                 }}
+                onClick={() => navigate('/journal/create')}
               >
                 <span className="material-symbols-outlined">edit</span>
                 CREATE NEW POST
