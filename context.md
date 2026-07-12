@@ -93,3 +93,96 @@ The product has a strong theme system and a playful editorial visual style, but 
 ## Quick Take
 
 This is a full-stack blog/community product with authenticated publishing, social engagement, personalized feeds, search, profile management, theme customization, and an AI-author layer built into the backend data model and client UI.
+
+## Server Deep Scan
+
+### Server Folder Structure
+
+- `server/`
+	- `package.json`, `package-lock.json`: Express/Mongo backend package metadata and dependency lockfile.
+	- `.env`: runtime config for MongoDB, JWT, Cloudinary, mail, client origin, and port.
+	- `src/`: all backend source code.
+
+- `server/src/`
+	- `index.js`: Express app bootstrap, middleware setup, route mounting, and MongoDB connection.
+	- `controllers/`: request handlers for auth, posts, feed, comments, likes, and follows.
+	- `routes/`: Express route maps that connect URL paths to controller functions.
+	- `middleware/`: shared request guards, currently the JWT auth protector.
+	- `models/`: Mongoose schemas for users, posts, follows, comments, likes, AI authors, bookmarks, and trending posts.
+	- `lib/`: infrastructure helpers for MongoDB, Cloudinary, and utility functions.
+	- `scripts/`: seed scripts for populating users, AI authors, posts, follows, likes, and comments.
+	- `scripts/mockdata/`: the static fixtures used by the seed scripts.
+
+- `server/src/controllers/`
+	- `auth.controller.js`: signup, login, logout, auth check, OTP send/verify, profile updates, theme updates, profile-section updates, and profile-info retrieval.
+	- `posts.controller.js`: create, update, delete, list, and fetch posts by ID or author.
+	- `feed.controller.js`: following feed, recommended feed, and trending feed.
+	- `comments.controller.js`: create, delete, and list comments by post.
+	- `likes.controller.js`: like, unlike, and like-state lookup.
+	- `follow.controller.js`: follow request, unfollow, accept/reject request, followers list, following list, and pending requests.
+
+- `server/src/routes/`
+	- `auth.route.js`: `/api/auth` endpoints for signup/login/logout, verification, profile, and theme changes.
+	- `posts.route.js`: `/api/posts` endpoints for create/update/delete/read post operations.
+	- `feed.route.js`: `/api/feed` endpoints for following/recommended/trending content.
+	- `comments.route.js`: `/api/comments` endpoints for comment CRUD-by-post.
+	- `likes.route.js`: `/api/likes` endpoints for like state and mutations.
+	- `follow.route.js`: `/api/follow` endpoints for social graph actions and pending approvals.
+	- `search.route.js`: `/api/search/:query/:isBlog/:userType` for combined blog/user search.
+	- `profile.route.js`: `/api/profile/me` and `/api/profile/:identifier` for human and AI profiles.
+
+- `server/src/models/`
+	- `user.model.js`: authenticated human users, verification, privacy, interests, theme preference, and denormalized social/blog counters.
+	- `post.model.js`: rich-text blog posts with slug, visibility, author type, tags, read time, counters, and publish state.
+	- `follow.model.js`: directed follow relationships with `pending`/`accepted`/`rejected` and `user` vs `AI` target type.
+	- `comment.model.js`: post comments and reply chains through `parentCommentId`.
+	- `like.model.js`: one-like-per-user-per-post tracking.
+	- `ai.model.js`: AI author profiles with bio, writing style, topic domains, and activity/counter fields.
+	- `bookmark.model.js`: bookmark storage, currently present but not wired into routes.
+	- `trending.model.js`: trending score storage, currently present but feed ranking is computed in memory.
+
+- `server/src/lib/`
+	- `db.js`: MongoDB connection bootstrap.
+	- `cloudinary.js`: Cloudinary client configuration.
+	- `utils/token.js`: JWT cookie generation.
+	- `utils/otp.js`: OTP creation and hashing.
+	- `utils/email.js`: OTP email delivery via Nodemailer.
+	- `utils/slugify.js`: title-to-slug helper for posts.
+
+- `server/src/scripts/`
+	- `seed-all.js`: orchestrates the full seed run.
+	- `seed-users.js`: creates human users and AI authors.
+	- `seed-posts.js`: creates human and AI posts with unique slugs.
+	- `seed-follows.js`: creates follow relationships and syncs counters.
+	- `seed-interactions.js`: creates likes and comments and backfills counters.
+	- `mockdata/`: fixture data for users, posts, follows, and interactions.
+
+### Backend Flow
+
+1. `src/index.js` loads environment variables, configures CORS, JSON/urlencoded body parsing, cookie parsing, and mounts all API routers under `/api/*`.
+2. The server starts listening on `PORT` and then calls `connectDB()` to connect MongoDB through Mongoose.
+3. Most protected routes pass through `protectRoute`, which reads the `jwt` cookie, verifies it with `JWT_SECRET`, loads the user document, and attaches it to `req.user`.
+4. Auth flows in `auth.controller.js` cover registration, login, logout, OTP verification, and profile/theme/profile-section updates.
+5. Post flows in `posts.controller.js` create unique slugs, upload optional cover images to Cloudinary, increment or decrement the user's blog count, and enforce ownership/visibility checks when reading or mutating posts.
+6. Feed flows in `feed.controller.js` combine follow relations, interests, engagement scoring, and author-type lookups to build following, recommended, and trending feeds for both human users and AI authors.
+7. Social flows in `follow.controller.js` manage private-account request states, AI follows, follow counters, pending request lists, and the accepted follower/following graph.
+8. Interaction flows in `comments.controller.js` and `likes.controller.js` enforce post existence, prevent duplicate likes, allow threaded replies, and keep comment/like counters in sync on the post document.
+9. Search and profile flows handle combined content discovery, human and AI author lookup, and visibility-aware post filtering for public/followers/private content.
+10. Seed scripts use the same models and helpers to populate realistic demo data: users, AI authors, posts, follows, likes, and comments.
+
+### Data And Behavior Notes
+
+- Human users are the primary authenticated actors; AI authors are stored separately and treated as first-class content sources in search, feeds, profiles, and follows.
+- Post visibility is enforced in controller logic, not only at the schema level, with `public`, `followers`, and `private` behavior.
+- Social counters are denormalized on the user and AI author documents and are updated when follows, posts, likes, and comments change.
+- Interests are normalized to slug-like tags before profile updates so they line up better with post tags and feed matching.
+- `bookmark.model.js` and `trending.model.js` exist in the backend structure, but the current route layer does not expose dedicated bookmark or persisted-trending endpoints.
+- The auth and profile code is built around cookie-based JWT sessions, not bearer tokens.
+
+### Current Implementation Quirks Observed
+
+- `login` returns `user.fullName`, while the user schema stores `fullname`.
+- `checkAuth` returns the full `req.user` object loaded by middleware.
+- `profile.route.js` supports both human usernames and AI author names through the `userType` query parameter.
+- `search.route.js` filters posts by visibility and can search both human users and AI authors.
+- Feed ranking is currently computed in memory from likes/comments and post age rather than persisted in `trending.model.js`.
