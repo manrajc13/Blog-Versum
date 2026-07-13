@@ -11,13 +11,13 @@ import feedRoutes from "./routes/feed.route.js";
 import commentRoutes from "./routes/comments.route.js";
 import searchRoute from "./routes/search.route.js";
 import profileRoute from "./routes/profile.route.js";
+import messageRoutes from "./routes/message.route.js";
 import connectDB from "./lib/db.js";
 import cookieParser from "cookie-parser";
 import dns from "dns";
+import { app, server } from "./lib/socket.js";
 
 const PORT = process.env.PORT;
-
-const app = express();
 
 // Force IPv4 DNS resolution — fixes ENETUNREACH on Render (IPv6 not routable)
 dns.setDefaultResultOrder('ipv4first');
@@ -37,9 +37,10 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/search", searchRoute);
 app.use("/api/profile", profileRoute);
+app.use("/api/messages", messageRoutes);
 
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     connectDB();
 });

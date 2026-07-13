@@ -143,6 +143,16 @@ export default function Navbar({
         </nav>
 
         <div className="flex items-center gap-3">
+          {/* Messages */}
+          <button
+            className="relative p-2 rounded-full hover:scale-110 transition-transform"
+            style={{ backgroundColor: hexToRgba(iconColor, 0.14) }}
+            onClick={() => navigate('/messages')}
+            title="Messages"
+          >
+            <span className="material-symbols-outlined" style={{ color: iconColor }}>chat_bubble</span>
+          </button>
+
           {/* Notification Bell */}
           <button
             className="relative p-2 rounded-full hover:scale-110 transition-transform"

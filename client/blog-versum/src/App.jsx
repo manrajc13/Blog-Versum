@@ -9,6 +9,7 @@ import MyJournal from './pages/Myjournal'
 import CreatePost from './pages/Createpost'
 import ViewBlogPage from './pages/ViewBlogPage'
 import Explore from './pages/Explore'
+import MessagePage from './pages/MessagePage'
 import { useEffect } from 'react'
 import {useAuthStore} from "./store/useAuthStore"
 import { Loader } from 'lucide-react'
@@ -56,6 +57,7 @@ function App() {
         <Route path="/journal/:id" element={<AuthGuard authUser={authUser}><ViewBlogPage authUser={authUser} /></AuthGuard>} />
         <Route path="/journal/create" element={<AuthGuard authUser={authUser}><CreatePost authUser={authUser} /></AuthGuard>} />
         <Route path="/settings" element={<AuthGuard authUser={authUser}><Settings authUser={authUser} /></AuthGuard>} />
+        <Route path="/messages" element={<AuthGuard authUser={authUser}><MessagePage authUser={authUser} /></AuthGuard>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
