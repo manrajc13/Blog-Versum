@@ -1,103 +1,74 @@
-import {create} from "zustand";
-import {axiosInstance} from "../lib/axios";
-import {toast} from "react-hot-toast";
+import { create } from "zustand";
+import toast from "react-hot-toast";
+import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
 
-const upsertConversation = (conversations, conversation) => {
-    if (!conversation?._id) return conversations;
-    const withoutExisting = conversations.filter((c) => c._id !== conversation._id);
-    return [conversation, ...withoutExisting].sort(
-        (a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)
-    );
-};
-
 export const useMessageStore = create((set, get) => ({
-    conversations: [],
+    chattedUsers: [],
     contacts: [],
+    activeUser: null,
     messages: [],
-    isFetchingConversations: false,
+
+    isFetchingChattedUsers: false,
     isFetchingContacts: false,
     isFetchingMessages: false,
     isSendingMessage: false,
-    activeUser: null,
 
-    fetchConversations: async () => {
+    // Users the logged-in user has already exchanged messages with.
+    fetchChattedUsers: async () => {
+        set({ isFetchingChattedUsers: true });
         try {
-            set({ isFetchingConversations: true });
-            const response = await axiosInstance.get("/messages/conversations");
-            set({ conversations: Array.isArray(response.data) ? response.data : [] });
+            const response = await axiosInstance.get("/messages/users");
+            set({ chattedUsers: response.data });
         } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to fetch conversations");
+            toast.error(error.response?.data?.message || "Failed to load conversations");
         } finally {
-            set({ isFetchingConversations: false });
+            set({ isFetchingChattedUsers: false });
         }
     },
 
+    // Followers/following the logged-in user can start a new chat with.
     fetchContacts: async () => {
+        set({ isFetchingContacts: true });
         try {
-            set({ isFetchingContacts: true });
-            const [followersRes, followingRes] = await Promise.all([
-                axiosInstance.get("/follow/followers"),
-                axiosInstance.get("/follow/following"),
-            ]);
-
-            const followers = followersRes.data?.followers || [];
-            const following = followingRes.data?.following || [];
-
-            const contactMap = new Map();
-            [...followers, ...following].forEach((person) => {
-                if (!person?._id || person.userType === "AI") return;
-                contactMap.set(person._id, {
-                    _id: person._id,
-                    username: person.username,
-                    avatar: person.avatar,
-                });
-            });
-
-            set({ contacts: Array.from(contactMap.values()) });
+            const response = await axiosInstance.get("/messages/users-to-chat-with");
+            set({ contacts: response.data });
         } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to fetch contacts");
+            toast.error(error.response?.data?.message || "Failed to load contacts");
         } finally {
             set({ isFetchingContacts: false });
         }
     },
 
-    fetchMessages: async (userId) => {
-        try {
-            set({ isFetchingMessages: true });
-            const response = await axiosInstance.get(`/messages/with/${userId}`);
-            const { conversation, messages } = response.data;
+    setActiveUser: (user) => {
+        set({ activeUser: user, messages: [] });
+    },
 
-            set((state) => ({
-                messages: messages || [],
-                conversations: conversation
-                    ? upsertConversation(state.conversations, conversation)
-                    : state.conversations,
-            }));
+    fetchMessages: async (userId) => {
+        set({ isFetchingMessages: true });
+        try {
+            const response = await axiosInstance.get(`/messages/${userId}`);
+            set({ messages: response.data });
         } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to fetch messages");
+            toast.error(error.response?.data?.message || "Failed to load messages");
         } finally {
             set({ isFetchingMessages: false });
         }
     },
 
     sendMessage: async (messageData) => {
-        const { activeUser } = get();
-        if (!activeUser?._id) return;
+        const { activeUser, messages, chattedUsers } = get();
+        if (!activeUser) return;
 
+        set({ isSendingMessage: true });
         try {
-            set({ isSendingMessage: true });
             const response = await axiosInstance.post(`/messages/send/${activeUser._id}`, messageData);
-            const { message, conversation } = response.data;
+            set({ messages: [...messages, response.data] });
 
-            set((state) => ({
-                messages: state.messages.some((m) => m._id === message._id)
-                    ? state.messages
-                    : [...state.messages, message],
-                conversations: conversation
-                    ? upsertConversation(state.conversations, conversation)
-                    : state.conversations,
-            }));
+            const alreadyChatted = chattedUsers.some((user) => user._id === activeUser._id);
+            if (!alreadyChatted) {
+                set({ chattedUsers: [activeUser, ...chattedUsers] });
+            }
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to send message");
         } finally {
@@ -109,24 +80,18 @@ export const useMessageStore = create((set, get) => ({
         const socket = useAuthStore.getState().socket;
         if (!socket) return;
 
-        socket.off("newMessage");
-        socket.on("newMessage", ({ message, senderId, receiverId }) => {
-            const authUserId = useAuthStore.getState().authUser?._id;
-            const otherUserId = senderId === authUserId ? receiverId : senderId;
-            const { activeUser } = get();
+        socket.on("newMessage", (newMessage) => {
+            const { activeUser, messages, chattedUsers } = get();
 
-            if (activeUser?._id === otherUserId) {
-                set((state) => ({
-                    messages: state.messages.some((m) => m._id === message._id)
-                        ? state.messages
-                        : [...state.messages, message],
-                }));
+            if (activeUser && newMessage.senderId === activeUser._id) {
+                set({ messages: [...messages, newMessage] });
+                return;
             }
 
-            // The sidebar's last-message previews come from the server, so a
-            // fresh fetch is the simplest way to keep them correct — no
-            // client-side reconstruction of conversation state to get wrong.
-            get().fetchConversations();
+            const alreadyChatted = chattedUsers.some((user) => user._id === newMessage.senderId);
+            if (!alreadyChatted) {
+                get().fetchChattedUsers();
+            }
         });
     },
 
@@ -134,9 +99,4 @@ export const useMessageStore = create((set, get) => ({
         const socket = useAuthStore.getState().socket;
         socket?.off("newMessage");
     },
-
-    setActiveUser: (user) => {
-        set({ activeUser: user, messages: [] });
-    },
-
 }));

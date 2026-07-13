@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useThemeStore } from '../../store/useThemeStore'
 import { hexToRgba } from '../../store/themeConfig'
 import { useMessageStore } from '../../store/useMessageStore'
-import { useAuthStore } from '../../store/useAuthStore'
 import { DEFAULT_AVATAR_URL } from '../../lib/defaultAvatar'
-import { formatRelativeTime } from '../../lib/formatChatTime'
 
 function SidebarSkeleton({ theme }) {
   return (
@@ -22,12 +20,7 @@ function SidebarSkeleton({ theme }) {
   )
 }
 
-function ConversationRow({ conversation, authUserId, isActive, iconColor, onClick }) {
-  const other = conversation.otherParticipant
-  const lastMessage = conversation.lastMessage
-  const isOwnLastMessage = lastMessage?.senderId?._id === authUserId
-  const isUnseen = !isOwnLastMessage && lastMessage && lastMessage.status !== 'read'
-
+function UserRow({ user, isActive, iconColor, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -36,67 +29,30 @@ function ConversationRow({ conversation, authUserId, isActive, iconColor, onClic
       onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = hexToRgba(iconColor, 0.06) }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent' }}
     >
-      <div
-        className="size-12 rounded-full overflow-hidden border-2 shrink-0"
-        style={{ borderColor: isUnseen ? iconColor : hexToRgba(iconColor, 0.2) }}
-      >
-        <img src={other?.avatar || DEFAULT_AVATAR_URL} alt={other?.username} className="w-full h-full object-cover" />
+      <div className="size-12 rounded-full overflow-hidden border-2 shrink-0" style={{ borderColor: hexToRgba(iconColor, 0.2) }}>
+        <img src={user.avatar || DEFAULT_AVATAR_URL} alt={user.username} className="w-full h-full object-cover" />
       </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className={`text-sm truncate ${isUnseen ? 'font-black text-slate-900 dark:text-white' : 'font-bold text-slate-700 dark:text-slate-200'}`}>
-            {other?.username || 'Unknown user'}
-          </p>
-          <span className="text-[11px] font-semibold text-slate-400 shrink-0">
-            {formatRelativeTime(conversation.lastMessageAt)}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <p className={`text-xs truncate ${isUnseen ? 'font-bold text-slate-600 dark:text-slate-300' : 'text-slate-400 font-medium'}`}>
-            {isOwnLastMessage && 'You: '}
-            {conversation.lastMessageText || 'Say hello 👋'}
-          </p>
-          {isUnseen && (
-            <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: iconColor }} />
-          )}
-        </div>
-      </div>
-    </button>
-  )
-}
-
-function ContactRow({ contact, iconColor, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors"
-      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = hexToRgba(iconColor, 0.06) }}
-      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-    >
-      <div className="size-10 rounded-full overflow-hidden border-2 shrink-0" style={{ borderColor: hexToRgba(iconColor, 0.22) }}>
-        <img src={contact.avatar || DEFAULT_AVATAR_URL} alt={contact.username} className="w-full h-full object-cover" />
-      </div>
-      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{contact.username}</p>
+      <p className="text-sm font-bold truncate text-slate-700 dark:text-slate-200">
+        {user.username || user.fullname || 'Unknown user'}
+      </p>
     </button>
   )
 }
 
 export default function MessageSidebar({ activeUser, onSelectUser }) {
   const theme = useThemeStore((state) => state.getTheme())
-  const authUser = useAuthStore((state) => state.authUser)
   const {
-    conversations, contacts,
-    isFetchingConversations, isFetchingContacts,
-    fetchConversations, fetchContacts,
+    chattedUsers, contacts,
+    isFetchingChattedUsers, isFetchingContacts,
+    fetchChattedUsers, fetchContacts,
   } = useMessageStore()
 
   const [showContacts, setShowContacts] = useState(false)
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    fetchConversations()
-  }, [fetchConversations])
+    fetchChattedUsers()
+  }, [fetchChattedUsers])
 
   const handleToggleContacts = () => {
     if (!showContacts && contacts.length === 0) fetchContacts()
@@ -104,30 +60,25 @@ export default function MessageSidebar({ activeUser, onSelectUser }) {
   }
 
   const existingContactIds = useMemo(
-    () => new Set(conversations.map((c) => c.otherParticipant?._id).filter(Boolean)),
-    [conversations]
+    () => new Set(chattedUsers.map((user) => user._id)),
+    [chattedUsers]
   )
 
-  const filteredConversations = useMemo(() => {
+  const filteredChattedUsers = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return conversations
-    return conversations.filter((c) => c.otherParticipant?.username?.toLowerCase().includes(q))
-  }, [conversations, search])
+    if (!q) return chattedUsers
+    return chattedUsers.filter((user) => user.username?.toLowerCase().includes(q))
+  }, [chattedUsers, search])
 
   const newChatContacts = useMemo(() => {
     const q = search.trim().toLowerCase()
     return contacts
-      .filter((c) => !existingContactIds.has(c._id))
-      .filter((c) => !q || c.username?.toLowerCase().includes(q))
+      .filter((contact) => !existingContactIds.has(contact._id))
+      .filter((contact) => !q || contact.username?.toLowerCase().includes(q))
   }, [contacts, existingContactIds, search])
 
-  const handleSelectConversation = (conversation) => {
-    if (!conversation.otherParticipant) return
-    onSelectUser(conversation.otherParticipant)
-  }
-
-  const handleSelectContact = (contact) => {
-    onSelectUser(contact)
+  const handleSelectUser = (user) => {
+    onSelectUser(user)
     setShowContacts(false)
   }
 
@@ -190,18 +141,19 @@ export default function MessageSidebar({ activeUser, onSelectUser }) {
               </div>
             ) : (
               newChatContacts.map((contact) => (
-                <ContactRow
+                <UserRow
                   key={contact._id}
-                  contact={contact}
+                  user={contact}
+                  isActive={activeUser?._id === contact._id}
                   iconColor={theme.primary}
-                  onClick={() => handleSelectContact(contact)}
+                  onClick={() => handleSelectUser(contact)}
                 />
               ))
             )}
           </div>
-        ) : isFetchingConversations ? (
+        ) : isFetchingChattedUsers ? (
           <SidebarSkeleton theme={theme} />
-        ) : filteredConversations.length === 0 ? (
+        ) : filteredChattedUsers.length === 0 ? (
           <div className="text-center py-16 px-6">
             <span className="material-symbols-outlined text-5xl block mb-3" style={{ color: hexToRgba(theme.primary, 0.28) }}>
               chat_bubble_outline
@@ -211,14 +163,13 @@ export default function MessageSidebar({ activeUser, onSelectUser }) {
           </div>
         ) : (
           <div className="p-2 space-y-0.5">
-            {filteredConversations.map((conversation) => (
-              <ConversationRow
-                key={conversation._id}
-                conversation={conversation}
-                authUserId={authUser?._id}
-                isActive={activeUser?._id === conversation.otherParticipant?._id}
+            {filteredChattedUsers.map((user) => (
+              <UserRow
+                key={user._id}
+                user={user}
+                isActive={activeUser?._id === user._id}
                 iconColor={theme.primary}
-                onClick={() => handleSelectConversation(conversation)}
+                onClick={() => handleSelectUser(user)}
               />
             ))}
           </div>

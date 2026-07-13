@@ -20,7 +20,7 @@ The product has a strong theme system and a playful editorial visual style, but 
 - Tailwind CSS with PostCSS and Autoprefixer
 - react-hot-toast for notifications
 - lucide-react for icons
-- No `socket.io-client` dependency yet — the client cannot connect to the server's Socket.IO layer (see [Direct Messaging](#direct-messaging-in-progress) below).
+- `socket.io-client` connects to the server's Socket.IO layer for direct messaging and online presence (see [Direct Messaging](#direct-messaging) below).
 
 ### Server
 
@@ -63,7 +63,7 @@ The product has a strong theme system and a playful editorial visual style, but 
 - Follow workflow for public users, private users, and AI authors.
 - Search across posts and users with author-type filtering.
 - Profile lookup that supports both human users and AI authors.
-- Direct messaging: 1:1 conversations, text/image messages, and real-time delivery + online-presence broadcast over Socket.IO (server-side only — see below).
+- Direct messaging: 1:1 text/image messages between users, real-time delivery + online-presence broadcast over Socket.IO, sidebar of already-messaged users, and a "people you can message" list sourced from accepted follow relationships (see below).
 
 ## Data Model Summary
 
@@ -71,8 +71,7 @@ The product has a strong theme system and a playful editorial visual style, but 
 - Posts store title, rich content, catchline, cover image, author reference, author type, visibility, tags, read time, like/comment counts, slug, published state, and font selection.
 - Follows support pending and accepted relationships, with separate handling for human users and AI authors.
 - AI authors have name, avatar, bio, writing style, topic domains, follower count, post count, and active state.
-- Conversations store two `participants`, a `lastMessage` ref, denormalized `lastMessageText`/`lastMessageAt` for list sorting.
-- Messages store `conversationId`, `senderId`, `text`, optional `image` URL, `messageType` (text/image), a `status` enum (sent/delivered/read, not yet driven by any read-receipt logic), and `isDeleted` (soft-delete flag, not yet exposed via any route).
+- Messages store `senderId`, `receiverId`, `text`, and an optional `image` URL, with timestamps. There is no `Conversation` model — a "conversation" is just the set of `Message` documents between two user ids, derived on read.
 
 ## Architecture Notes
 
@@ -99,7 +98,7 @@ The product has a strong theme system and a playful editorial visual style, but 
 
 ## Quick Take
 
-This is a full-stack blog/community product with authenticated publishing, social engagement, personalized feeds, search, profile management, theme customization, an AI-author layer built into the backend data model and client UI, and an in-progress real-time direct-messaging layer (backend complete, frontend not yet wired up).
+This is a full-stack blog/community product with authenticated publishing, social engagement, personalized feeds, search, profile management, theme customization, an AI-author layer built into the backend data model and client UI, and a working real-time direct-messaging layer (see [Direct Messaging](#direct-messaging)).
 
 ---
 
@@ -117,7 +116,7 @@ This is a full-stack blog/community product with authenticated publishing, socia
     - `controllers/`: request handlers for auth, posts, feed, comments, likes, follows, and messages.
     - `routes/`: Express route maps that connect URL paths to controller functions.
     - `middleware/`: shared request guards, currently the JWT auth protector.
-    - `models/`: Mongoose schemas for users, posts, follows, comments, likes, AI authors, bookmarks, trending posts, conversations, and messages.
+    - `models/`: Mongoose schemas for users, posts, follows, comments, likes, AI authors, bookmarks, trending posts, and messages.
     - `lib/`: infrastructure helpers for MongoDB, Cloudinary, Socket.IO, and utility functions.
     - `scripts/`: seed scripts for populating users, AI authors, posts, follows, likes, and comments.
     - `scripts/mockdata/`: the static fixtures used by the seed scripts.
@@ -129,7 +128,7 @@ This is a full-stack blog/community product with authenticated publishing, socia
     - `comments.controller.js`: create, delete, and list comments by post.
     - `likes.controller.js`: like, unlike, and like-state lookup.
     - `follow.controller.js`: follow request, unfollow, accept/reject request, followers list, following list, and pending requests.
-    - `message.controller.js`: `sendMessage` (creates/reuses a conversation, uploads an optional image to Cloudinary, persists the message, updates conversation's last-message fields, and emits `newMessage` to both sender's and receiver's sockets), `getConversations` (list current user's conversations sorted by `lastMessageAt`), `getConversationWithUser` (find-or-create the conversation with a specific user plus its full message history), `getMessagesByConversation` (fetch messages for a conversation ID after verifying the requester is a participant).
+    - `message.controller.js`: `getUsersForSidebar` (derives the list of users the current user has already exchanged messages with, by scanning `Message` documents where the user is sender or receiver and de-duping the other party), `getUsersToChatWith` (lists users reachable via an accepted `Follow` relationship — either direction, `followingType: "user"` — as candidates for starting a new chat), `getMessages` (fetch the full message history between the current user and `:id` by matching `senderId`/`receiverId` pairs in both directions), `sendMessage` (uploads an optional image to Cloudinary, persists a `Message` with `senderId`/`receiverId`, and emits `newMessage` to the receiver's socket if online).
 
 - `server/src/routes/`
     - `auth.route.js`: `/api/auth` endpoints for signup/login/logout, verification, profile, and theme changes.
@@ -140,7 +139,7 @@ This is a full-stack blog/community product with authenticated publishing, socia
     - `follow.route.js`: `/api/follow` endpoints for social graph actions and pending approvals.
     - `search.route.js`: `/api/search/:query/:isBlog/:userType` for combined blog/user search.
     - `profile.route.js`: `/api/profile/me` and `/api/profile/:identifier` for human and AI profiles.
-    - `message.route.js`: `/api/messages` — `GET /conversations`, `GET /with/:userId`, `GET /conversation/:conversationId`, `POST /send/:receiverId`. All routes go through `protectRoute`.
+    - `message.route.js`: `/api/messages` — `GET /users` (chatted-with users), `GET /users-to-chat-with` (messageable followers/following), `GET /:id` (message history with user `:id`), `POST /send/:id` (send to user `:id`). All routes go through `protectRoute`.
 
 - `server/src/models/`
     - `user.model.js`: authenticated human users, verification, privacy, interests, theme preference, and denormalized social/blog counters.
@@ -151,8 +150,7 @@ This is a full-stack blog/community product with authenticated publishing, socia
     - `ai.model.js`: AI author profiles with bio, writing style, topic domains, and activity/counter fields.
     - `bookmark.model.js`: bookmark storage, currently present but not wired into routes.
     - `trending.model.js`: trending score storage, currently present but feed ranking is computed in memory.
-    - `conversation.model.js`: 1:1 `participants` array, `lastMessage` ref, `lastMessageText`, `lastMessageAt`; indexed on `participants` and `lastMessageAt` for list queries. Schema allows >2 participants but controller logic (`$size: 2`) only ever creates/looks up 2-person conversations — no group chat.
-    - `message.model.js`: `conversationId`, `senderId`, `text`, `image`, `messageType` (text/image), `status` (sent/delivered/read — set on create, never updated afterward), `isDeleted` (soft-delete flag with no route that sets it to `true`). Indexed on `(conversationId, createdAt)` and `senderId`.
+    - `message.model.js`: `senderId`, `receiverId` (both refs to `User`), optional `text` and `image`, with `timestamps`. No conversation/thread model — the pair of user ids is the only grouping, computed at query time in `message.controller.js`.
 
 - `server/src/lib/`
     - `db.js`: MongoDB connection bootstrap.
@@ -182,7 +180,7 @@ This is a full-stack blog/community product with authenticated publishing, socia
 7. Social flows in `follow.controller.js` manage private-account request states, AI follows, follow counters, pending request lists, and the accepted follower/following graph.
 8. Interaction flows in `comments.controller.js` and `likes.controller.js` enforce post existence, prevent duplicate likes, allow threaded replies, and keep comment/like counters in sync on the post document.
 9. Search and profile flows handle combined content discovery, human and AI author lookup, and visibility-aware post filtering for public/followers/private content.
-10. Messaging flows in `message.controller.js` find-or-create a 2-person `Conversation`, persist a `Message`, patch the conversation's last-message fields, and — separately from the HTTP response — push a `newMessage` event over Socket.IO to whichever of the sender/receiver sockets are currently connected (looked up via `lib/socket.js`'s `userSocketMap`).
+10. Messaging flows in `message.controller.js` derive "who have I messaged" and "who can I message" lists directly from `Message` and `Follow` documents (no `Conversation` model), persist a `Message` on send, and — separately from the HTTP response — push a `newMessage` event over Socket.IO to the receiver's socket if currently connected (looked up via `lib/socket.js`'s `userSocketMap`).
 11. Socket.IO connection handling in `lib/socket.js` reads `userId` from the handshake query string, maps it to the live socket id, and broadcasts the full online-user id list to everyone on every connect/disconnect.
 12. Seed scripts use the same models and helpers to populate realistic demo data: users, AI authors, posts, follows, likes, and comments.
 
@@ -204,19 +202,23 @@ This is a full-stack blog/community product with authenticated publishing, socia
 - `search.route.js` filters posts by visibility and can search both human users and AI authors.
 - Feed ranking is currently computed in memory from likes/comments and post age rather than persisted in `trending.model.js`.
 - `lib/socket.js` hardcodes CORS origin to `http://localhost:5173` instead of reading `process.env.CLIENT_URL` like the rest of the app does — production Socket.IO connections will be rejected by CORS as currently written.
-- `Message.status` and `Message.isDeleted` are defined in the schema but nothing in the route/controller layer ever transitions them past their defaults — no read receipts, no delete-message endpoint.
+- There is no read-receipt state, no message editing, and no delete-message endpoint — `message.model.js` only stores `senderId`/`receiverId`/`text`/`image`.
 - `userSocketMap` in `lib/socket.js` is process-local memory; presence and delivery break across multiple server instances/restarts (no Redis adapter or similar).
+- Fetching message history (`getMessages`) and the two sidebar-list endpoints are both O(n) scans over every `Message`/`Follow` document touching the user rather than paginated/indexed lookups — fine at seed-data scale, worth revisiting before real usage volume.
 
 ---
 
-# Direct Messaging (in progress)
+# Direct Messaging
 
-This feature is **backend-complete, frontend-stubbed**. Useful to know before picking up chat UI work:
+This feature is now implemented end-to-end (server + client) and manually verified against two seeded, mutually-following accounts.
 
-- Server: `message.controller.js`, `message.route.js`, `conversation.model.js`, `message.model.js`, `lib/socket.js` are all implemented and mounted at `/api/messages` (see Server Deep Scan above).
-- Client: `store/useMessageStore.js` exists but only declares state flags (`users`, `isfetchingUsers`, `isfetchingMessages`, `isSendingMessage`) and a `fetchUsers` action that sets a loading flag and never calls the API or returns data.
-- No chat page/route exists in `App.jsx`, no chat UI components exist under `components/`, and `socket.io-client` is not in `client/blog-versum/package.json` — so the client cannot open a socket connection at all yet.
-- Anyone picking this up needs to: add `socket.io-client`, connect it (passing `authUser._id` as the `userId` query param to match `lib/socket.js`'s handshake expectation), build out `useMessageStore` against the four `/api/messages` endpoints, listen for the `newMessage` and `getOnlineUsers` socket events, and add a route + page/components for the chat UI.
+- **Server**: `message.controller.js`, `message.route.js`, `message.model.js`, `lib/socket.js` mounted at `/api/messages` (see Server Deep Scan above). No `Conversation` model — conversations are derived on read from `Message` rows.
+- **Client socket connection**: `useAuthStore.js` owns the Socket.IO client. `connectSocket()` (called after `checkAuth`/`login`) opens `io(BASE_URL, { query: { userId: authUser._id } })` and stores it as `socket`; it listens for `getOnlineUsers` and keeps `onlineUsers` in state. `disconnectSocket()` runs on logout.
+- **`store/useMessageStore.js`**: `chattedUsers`/`fetchChattedUsers` (→ `GET /messages/users`), `contacts`/`fetchContacts` (→ `GET /messages/users-to-chat-with`), `activeUser`/`setActiveUser`, `messages`/`fetchMessages(userId)` (→ `GET /messages/:id`), `sendMessage({text, image})` (→ `POST /messages/send/:id`, optimistically appends to `messages` and prepends `activeUser` to `chattedUsers` if new), and `subscribeToMessages`/`unsubscribeFromMessages` (attach/detach a `newMessage` listener on `useAuthStore`'s socket — appends to `messages` if the sender is the open `activeUser`, otherwise triggers a `fetchChattedUsers()` refresh).
+- **Route/page**: `App.jsx` mounts `MessagePage` at `/messages` behind `AuthGuard`. `pages/MessagePage.jsx` composes `components/messages/MessageSidebar.jsx` (left pane) and `components/messages/ChatContainer.jsx` (right pane), and owns the `subscribeToMessages`/`unsubscribeFromMessages` lifecycle tied to the socket becoming available.
+- **`components/messages/MessageSidebar.jsx`**: on mount, calls `fetchChattedUsers()` to list people already messaged. The pencil/edit icon toggles a "people you can message" view backed by `fetchContacts()` (accepted followers/following from `Follow`), filtered to exclude anyone already in `chattedUsers`. Both lists support local username search.
+- **`components/messages/ChatContainer.jsx`**: renders `messages` for the `activeUser`, shows online/offline status from `useAuthStore`'s `onlineUsers`, and supports text + single-image (base64 → Cloudinary) composing. Ownership of a bubble is determined by `message.senderId === authUser._id` — `senderId`/`receiverId` come back from the API as plain id strings, not populated objects.
+- **Known gaps**: no read receipts, no message editing/deletion, no per-conversation unread badges or last-message previews in the sidebar (the backend has no data to support the last two without adding it), and presence/delivery are still limited to a single server process (see quirks above).
 
 ---
 
@@ -235,7 +237,7 @@ The client is a Vite + React 19 app at `client/blog-versum/`. This section is in
 
 ## `src/` Top Level
 
-- `App.jsx` — route table; wraps every route in `AuthGuard`/`PublicRoute`, bootstraps auth via `useAuthStore.checkAuth()` on mount, renders a global `Toaster`.
+- `App.jsx` — route table (including `/messages` → `MessagePage`); wraps every route in `AuthGuard`/`PublicRoute`, bootstraps auth via `useAuthStore.checkAuth()` on mount, renders a global `Toaster`.
 - `main.jsx` — React root render entrypoint (StrictMode).
 - `index.css` — Tailwind entry + global styles.
 
@@ -255,6 +257,7 @@ The client is a Vite + React 19 app at `client/blog-versum/`. This section is in
 - `settings/sections/ProfileSection.jsx` — edit profile form (username/bio/avatar). Uses `useAuthStore`.
 - `settings/sections/ThemeSection.jsx` — theme picker grid. Uses `useThemeStore`, `useAuthStore`.
 - `settings/sections/NotificationsSection.jsx` — pending follow-request accept/reject list. Uses `useFollowStore`.
+- `MessagePage.jsx` — direct-messaging shell: sidebar + chat pane, mobile back-button toggle, owns the socket `subscribeToMessages`/`unsubscribeFromMessages` lifecycle. Uses `useThemeStore`, `useMessageStore`, `useAuthStore`.
 
 ## `src/components/`
 
@@ -273,13 +276,15 @@ The client is a Vite + React 19 app at `client/blog-versum/`. This section is in
 - `home2/HeroSection.jsx`, `FeaturesGrid.jsx`, `BentoShowcase.jsx`, `CtaSection.jsx`, `PublicNavbar.jsx` — landing-page section components, all theme-token driven.
 - `onboarding/StepAvatar.jsx`, `StepBio.jsx`, `StepInterests.jsx`, `StepPrivacy.jsx`, `StepTheme.jsx` — one component per onboarding wizard step; local state, applied to the backend later via `Onboarding.jsx`.
 - `profile/ConnectionsCard.jsx` — followers/following list card. Uses `useFollowStore`.
+- `messages/MessageSidebar.jsx` — chatted-users list + toggleable "people you can message" (accepted follows) list, both with local search. Uses `useThemeStore`, `useMessageStore`.
+- `messages/ChatContainer.jsx` — message thread for the active user, online/offline status, text + image composer. Uses `useThemeStore`, `useAuthStore`, `useMessageStore`.
 - `profile/ProfilePopoverCard.jsx` — navbar profile dropdown (stats + logout); data via props.
 - `shared/PageDoodles.jsx` — reusable decorative SVG background used across most pages (density via `variant` prop). Uses `useThemeStore`.
 - `toasts/DeletePostConfirmToast.jsx`, `toasts/UnfollowConfirmToast.jsx` — custom `react-hot-toast` confirmation UIs.
 
 ## `src/store/` (Zustand — see mapping table below for API calls)
 
-`useAuthStore`, `useThemeStore`, `useFeedStore`, `usePostStore`, `useFollowStore`, `useLikeStore`, `useCommentStore`, `useProfileStore`, `useSearchStore`, `useExploreStore` (stub — just `topics: []`), `useMessageStore` (stub — see [Direct Messaging](#direct-messaging-in-progress)), `themeConfig.js` (static theme palette data + `hexToRgba` helper, not a store).
+`useAuthStore`, `useThemeStore`, `useFeedStore`, `usePostStore`, `useFollowStore`, `useLikeStore`, `useCommentStore`, `useProfileStore`, `useSearchStore`, `useExploreStore` (stub — just `topics: []`), `useMessageStore` (fully wired — see [Direct Messaging](#direct-messaging)), `themeConfig.js` (static theme palette data + `hexToRgba` helper, not a store).
 
 ## `src/lib/` (non-store helpers)
 
@@ -287,6 +292,7 @@ The client is a Vite + React 19 app at `client/blog-versum/`. This section is in
 - `defaultAvatar.js` — default avatar image URLs.
 - `fallbackCoverImages.js` — curated cover images + deterministic hash-based picker.
 - `Mockexploredata.js`, `mockProfileData.js`, `mockSearchData.js` — mock datasets used to stub Explore/Profile/Search UI ahead of/independent of real backend wiring.
+- `formatChatTime.js` — `formatRelativeTime` (short relative label) and `formatMessageTime` (clock time) helpers for chat UI timestamps.
 
 ## `src/guards/`
 
@@ -347,8 +353,11 @@ Which client store hits which server route. All calls go through `lib/axios.js`'
 | `useProfileStore` | `fetchMyProfileBasics` | `GET /profile/me` | `profile.route.js` |
 | | `fetchProfile` | `GET /profile/:identifier?userType=` | same |
 | `useSearchStore` | `fetchSearchResults` | `GET /search/:query/:isBlog/:userType` | `search.route.js` |
-| `useMessageStore` | *(stub — `fetchUsers` sets a loading flag and calls no endpoint)* | — | `message.route.js` → `message.controller.js` exists and is fully functional server-side; nothing on the client calls it yet. See [Direct Messaging](#direct-messaging-in-progress). |
+| `useMessageStore` | `fetchChattedUsers` | `GET /messages/users` | `message.route.js` → `message.controller.js` |
+| | `fetchContacts` | `GET /messages/users-to-chat-with` | same |
+| | `fetchMessages` | `GET /messages/:id` | same |
+| | `sendMessage` | `POST /messages/send/:id` | same |
 | `useExploreStore` | *(stub — `topics: []`, no actions)* | — | `Explore.jsx` currently reads from `lib/Mockexploredata.js` instead. |
 | `useThemeStore` | local only (persisted to `localStorage`) | — | synced *from* `useAuthStore` (`syncThemeFromUser`) whenever auth/profile/theme responses include `themePreference`; not an independent API caller. |
 
-Not yet reachable from the client at all: Socket.IO events (`newMessage`, `getOnlineUsers`) — no `socket.io-client` connection exists in `client/blog-versum`.
+Socket.IO events (`newMessage`, `getOnlineUsers`) are reachable from the client: `useAuthStore.js` opens the `socket.io-client` connection and tracks `onlineUsers`; `useMessageStore.js` subscribes/unsubscribes to `newMessage` for the active chat.

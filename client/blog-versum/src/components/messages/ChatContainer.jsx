@@ -121,7 +121,7 @@ export default function ChatContainer({ activeUser }) {
             </div>
           ) : (
             groupedMessages.map((message) => {
-              const isOwn = message.senderId?._id === authUser?._id
+              const isOwn = message.senderId === authUser?._id
               return (
                 <div key={message._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>

@@ -1,17 +1,17 @@
 import express from "express";
 import protectRoute from "../middleware/auth.middleware.js";
 import {
-    getConversationWithUser,
-    getConversations,
-    getMessagesByConversation,
+    getMessages,
+    getUsersForSidebar,
+    getUsersToChatWith,
     sendMessage
 } from "../controllers/message.controller.js";
 
 const router = express.Router();
 
-router.get("/conversations", protectRoute, getConversations);
-router.get("/with/:userId", protectRoute, getConversationWithUser);
-router.get("/conversation/:conversationId", protectRoute, getMessagesByConversation);
-router.post("/send/:receiverId", protectRoute, sendMessage);
+router.get("/users", protectRoute, getUsersForSidebar);
+router.get("/users-to-chat-with", protectRoute, getUsersToChatWith);
+router.get("/:id", protectRoute, getMessages);
+router.post("/send/:id", protectRoute, sendMessage);
 
 export default router;
