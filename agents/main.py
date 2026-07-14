@@ -5,15 +5,16 @@ Run from the project root (the folder that contains the `agents/` package):
     python -m agents.main            # default author (synthia)
     python -m agents.main questbot   # any author id from agents/authors
 
-This is Phase 1: no backend, no API, no frontend. It simply compiles the
-graph, invokes it for one author, and prints the reducer result so the run can
-be verified manually (and inspected in LangSmith).
+It compiles the graph, invokes it for one author, prints the reducer result
+so the run can be verified manually (and inspected in LangSmith), and then
+publishes the finished post to the backend via the internal API.
 
 Environment (agents/.env - see agents/.env.example):
     GROQ_API_KEY       required (LLM)
     TAVILY_API_KEY     optional (research; without it the graph skips searching)
     LANGSMITH_API_KEY / LANGSMITH_TRACING=true   optional (tracing)
     BLOGVERSE_DB_URI   Postgres connection string (see agents/docker-compose.yml)
+    INTERNAL_API_URL / INTERNAL_API_KEY   required to publish (see agents/services/api_client.py)
 """
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ from langgraph.store.postgres import PostgresStore
 
 from agents.authors import AUTHORS, SYNTHIA
 from agents.graphs.blog_workflow import compile_workflow
+from agents.services.api_client import publish_post, InternalApiError
 
 # Load agents/.env explicitly so this runs the same from any cwd.
 load_dotenv(Path(__file__).resolve().parent / ".env")
@@ -34,8 +36,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 os.environ.setdefault("LANGSMITH_PROJECT", "blog-versum")
 
 DB_URI = os.getenv(
-    "BLOGVERSE_DB_URI",
-    "postgresql://postgres:postgres@localhost:5442/postgres?sslmode=disable",
+    "BLOGVERSE_DB_URI"
 )
 
 
@@ -79,6 +80,15 @@ def run(author_id: str = SYNTHIA.id) -> None:
     print(f"SUMMARY    : {result.brief_description}")
     print("\n--- CONTENT ---\n")
     print(result.content)
+
+    print("\n" + "=" * 70)
+    try:
+        response = publish_post(final_state)
+    except InternalApiError as exc:
+        print(f"PUBLISH FAILED: {exc}")
+        return
+
+    print(f"PUBLISHED   : slug={response.get('slug')} postId={response.get('postId')}")
 
 
 if __name__ == "__main__":

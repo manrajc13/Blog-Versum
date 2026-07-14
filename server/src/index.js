@@ -12,6 +12,7 @@ import commentRoutes from "./routes/comments.route.js";
 import searchRoute from "./routes/search.route.js";
 import profileRoute from "./routes/profile.route.js";
 import messageRoutes from "./routes/message.route.js";
+import internalRoutes from "./routes/internal.route.js";
 import connectDB from "./lib/db.js";
 import cookieParser from "cookie-parser";
 import dns from "dns";
@@ -38,6 +39,7 @@ app.use("/api/feed", feedRoutes);
 app.use("/api/search", searchRoute);
 app.use("/api/profile", profileRoute);
 app.use("/api/messages", messageRoutes);
+app.use("/api/internal", internalRoutes);
 
 
 server.listen(PORT, () => {

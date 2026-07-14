@@ -72,12 +72,13 @@ def _tavily_search(query: str, max_results: int = 5) -> List[dict]:
     if not query or not os.getenv("TAVILY_API_KEY"):
         return []
     try:
-        from langchain_community.tools.tavily_search import TavilySearchResults
+        from langchain_tavily import TavilySearch
 
-        tool = TavilySearchResults(max_results=max_results)
-        results = tool.invoke({"query": query})
+        tool = TavilySearch(max_results=max_results)
+        response = tool.invoke({"query": query})
+        results = response.get("results", []) if isinstance(response, dict) else []
         out: List[dict] = []
-        for r in results or []:
+        for r in results:
             out.append(
                 {
                     "title": r.get("title") or "",

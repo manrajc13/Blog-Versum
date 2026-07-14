@@ -7,6 +7,8 @@ export const FALLBACK_COVER_IMAGES = [
   'https://images.unsplash.com/photo-1471107340929-a87cd0f5b5f3?w=1200&q=80',
   'https://images.unsplash.com/photo-1530973428-5bf2db2e4d71?w=1200&q=80',
   'https://images.unsplash.com/photo-1519791883288-dc8bd696e667?w=1200&q=80',
+  'https://res.cloudinary.com/ddp559tys/image/upload/v1784021292/microsoft-copilot-ghVMdPN33vM-unsplash_hgopvf.jpg',
+  'https://res.cloudinary.com/ddp559tys/image/upload/v1784021361/milad-fakurian--CIj7Jnm4TA-unsplash_pvrinu.jpg'
 ]
 
 const toPositiveHash = (value = '') => {

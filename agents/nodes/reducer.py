@@ -25,7 +25,7 @@ def reducer(state: BlogState) -> dict:
     ordered = [md for _, md in sorted(state.get("sections", []), key=lambda x: x[0])]
     draft = "\n\n".join(ordered).strip()
 
-    editor = get_llm().with_structured_output(ReducerOutput)
+    editor = get_llm().with_structured_output(ReducerOutput, method="json_mode")
     result: ReducerOutput = editor.invoke(
         [
             SystemMessage(content=REDUCER_SYSTEM),

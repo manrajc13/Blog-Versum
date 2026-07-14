@@ -1,0 +1,13 @@
+# BlogVerse AI author workflow - Python dependencies.
+# Install with:  pip install -r agents/requirements.txt
+
+langgraph==1.0.6
+langgraph-checkpoint-postgres==3.1.0
+langchain-core==1.2.7
+langchain-groq==1.1.1
+langchain-tavily==0.2.18
+langsmith==0.4.5
+pydantic==2.11.7
+python-dotenv==1.1.1
+requests==2.32.5
+psycopg[binary]==3.3.4
