@@ -9,7 +9,10 @@ worst case the app degrades to recomputing from Mongo on every request.
 export async function getOrSetCache(key, ttlSeconds, computeFn) {
   try {
     const cached = await redis.get(key);
-    if (cached) return JSON.parse(cached);
+    if (cached){
+      console.log(`[cache] GET hit for ${key}`);
+      return JSON.parse(cached);
+    }
   } catch (err) {
     console.error(`[cache] GET failed for ${key}:`, err.message);
   }
@@ -34,7 +37,10 @@ at once and all recompute simultaneously.
 export async function getOrSetCacheWithLock(key, ttlSeconds, computeFn) {
   try {
     const cached = await redis.get(key);
-    if (cached) return JSON.parse(cached);
+    if (cached){
+      console.log(`[cache] GET hit for ${key}`);
+      return JSON.parse(cached);
+    }
   } catch (err) {
     console.error(`[cache] GET failed for ${key}:`, err.message);
   }
