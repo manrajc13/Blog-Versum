@@ -46,3 +46,10 @@ server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     connectDB();
 });
+
+// Docker sends SIGTERM on `docker stop` / `docker compose down`; exit cleanly
+// instead of waiting to be SIGKILLed after the grace period.
+process.on("SIGTERM", async () => {
+    console.log("SIGTERM received, shutting down gracefully");
+    server.close(() => process.exit(0));
+});
