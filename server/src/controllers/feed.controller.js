@@ -2,6 +2,18 @@ import Post from "../models/post.model.js";
 import Follow from "../models/follow.model.js";
 import User from "../models/user.model.js";
 import AI_Author from "../models/ai.model.js";
+import { getOrSetCache, getOrSetCacheWithLock } from "../lib/cache.js";
+
+
+
+/*
+Cache TTLs (seconds). Tuning values, not deployment secrets, so kept as
+constants rather than env vars. Trending is global and most staleness-tolerant;
+following is per-user and most time-sensitive.
+*/
+const TRENDING_TTL_SECONDS = 180;
+const RECOMMENDED_TTL_SECONDS = 90;
+const FOLLOWING_TTL_SECONDS = 20;
 
 
 
@@ -78,54 +90,65 @@ export const getFollowingFeed = async (req, res) => {
 
     try {
 
-        const follows = await Follow.find({
-            followerId: userId,
-            status: "accepted"
-        }).select("followingId");
+        const computeFn = async () => {
 
-        const followingIds = follows.map(f => f.followingId);
+            const follows = await Follow.find({
+                followerId: userId,
+                status: "accepted"
+            }).select("followingId");
 
-        const posts = await Post.find({
-            authorId: { $in: followingIds },
-            published: true,
-            visibility: { $in: ["public", "followers"] }
-        })
-        .sort({ createdAt: -1 })
-        .limit(5);
+            const followingIds = follows.map(f => f.followingId);
 
-        const formattedPosts = [];
+            const posts = await Post.find({
+                authorId: { $in: followingIds },
+                published: true,
+                visibility: { $in: ["public", "followers"] }
+            })
+            .sort({ createdAt: -1 })
+            .limit(5);
 
-        for (const post of posts) {
-            let author;
+            const formattedPosts = [];
 
-            if (post.authorType === "AI") {
-                const aiAuthor = await AI_Author.findById(post.authorId);
-                if (!aiAuthor) continue;
-                author = { id: aiAuthor._id, name: aiAuthor.name, avatar: aiAuthor.avatar };
-            } else {
-                const user = await User.findById(post.authorId).select("username avatar");
-                if (!user) continue;
-                author = { id: user._id, username: user.username, avatar: user.avatar };
+            for (const post of posts) {
+                let author;
+
+                if (post.authorType === "AI") {
+                    const aiAuthor = await AI_Author.findById(post.authorId);
+                    if (!aiAuthor) continue;
+                    author = { id: aiAuthor._id, name: aiAuthor.name, avatar: aiAuthor.avatar };
+                } else {
+                    const user = await User.findById(post.authorId).select("username avatar");
+                    if (!user) continue;
+                    author = { id: user._id, username: user.username, avatar: user.avatar };
+                }
+
+                formattedPosts.push({
+                    postId: post._id,
+                    title: post.title,
+                    slug: post.slug,
+                    coverImage: post.coverImage,
+                    tags: post.tags,
+                    likeCount: post.likeCount,
+                    commentCount: post.commentCount,
+                    createdAt: post.createdAt,
+                    authorType: post.authorType,
+                    catchline: post.catchline,
+                    readTime: post.readTime,
+
+                    author
+                });
             }
 
-            formattedPosts.push({
-                postId: post._id,
-                title: post.title,
-                slug: post.slug,
-                coverImage: post.coverImage,
-                tags: post.tags,
-                likeCount: post.likeCount,
-                commentCount: post.commentCount,
-                createdAt: post.createdAt,
-                authorType: post.authorType,
-                catchline: post.catchline,  
-                readTime: post.readTime,
+            return { posts: formattedPosts };
+        };
 
-                author
-            });
-        }
+        const result = await getOrSetCache(
+            `feed:following:${userId}`,
+            FOLLOWING_TTL_SECONDS,
+            computeFn
+        );
 
-        res.status(200).json({ posts: formattedPosts });
+        res.status(200).json(result);
 
     } catch (err) {
 
@@ -161,54 +184,65 @@ export const getRecommendedFeed = async (req, res) => {
 
         const interestPatterns = interestTokens.map(tokenToTagRegex);
 
-        const posts = await Post.find({
-            tags: { $in: interestPatterns },
-            published: true,
-            visibility: "public"
-        })
-        .limit(15);
+        const computeFn = async () => {
 
-        const rankedPosts = posts
-            .map(post => ({
-                post,
-                score: calculateScore(post)
-            }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 5)
-            .map(item => item.post);
+            const posts = await Post.find({
+                tags: { $in: interestPatterns },
+                published: true,
+                visibility: "public"
+            })
+            .limit(15);
 
-        const formattedPosts = [];
+            const rankedPosts = posts
+                .map(post => ({
+                    post,
+                    score: calculateScore(post)
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5)
+                .map(item => item.post);
 
-        for (const post of rankedPosts) {
-            let author;
+            const formattedPosts = [];
 
-            if (post.authorType === "AI") {
-                const aiAuthor = await AI_Author.findById(post.authorId);
-                if (!aiAuthor) continue;
-                author = { id: aiAuthor._id, name: aiAuthor.name, avatar: aiAuthor.avatar };
-            } else {
-                const user = await User.findById(post.authorId).select("username avatar");
-                if (!user) continue;
-                author = { id: user._id, username: user.username, avatar: user.avatar };
+            for (const post of rankedPosts) {
+                let author;
+
+                if (post.authorType === "AI") {
+                    const aiAuthor = await AI_Author.findById(post.authorId);
+                    if (!aiAuthor) continue;
+                    author = { id: aiAuthor._id, name: aiAuthor.name, avatar: aiAuthor.avatar };
+                } else {
+                    const user = await User.findById(post.authorId).select("username avatar");
+                    if (!user) continue;
+                    author = { id: user._id, username: user.username, avatar: user.avatar };
+                }
+
+                formattedPosts.push({
+                    postId: post._id,
+                    title: post.title,
+                    slug: post.slug,
+                    coverImage: post.coverImage,
+                    tags: post.tags,
+                    likeCount: post.likeCount,
+                    commentCount: post.commentCount,
+                    createdAt: post.createdAt,
+                    authorType: post.authorType,
+                    catchline: post.catchline,
+                    readTime: post.readTime,
+                    author
+                });
             }
 
-            formattedPosts.push({
-                postId: post._id,
-                title: post.title,
-                slug: post.slug,
-                coverImage: post.coverImage,
-                tags: post.tags,
-                likeCount: post.likeCount,
-                commentCount: post.commentCount,
-                createdAt: post.createdAt,
-                authorType: post.authorType,
-                catchline: post.catchline,
-                readTime: post.readTime,
-                author
-            });
-        }
+            return { posts: formattedPosts };
+        };
 
-        res.status(200).json({ posts: formattedPosts });
+        const result = await getOrSetCache(
+            `feed:recommended:${userId}`,
+            RECOMMENDED_TTL_SECONDS,
+            computeFn
+        );
+
+        res.status(200).json(result);
 
     } catch (err) {
 
@@ -229,75 +263,86 @@ export const getTrendingFeed = async (req, res) => {
 
     try {
 
-        const posts = await Post.find({
-            published: true,
-            visibility: "public"
-        })
-        .limit(50);
+        const computeFn = async () => {
 
-        const ranked = posts
-            .map(post => ({
-                post,
-                score: calculateScore(post)
-            }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 5);
+            const posts = await Post.find({
+                published: true,
+                visibility: "public"
+            })
+            .limit(50);
 
-        const humanTrending = [];
-        const aiTrending = [];
-        const trendingPosts = [];
+            const ranked = posts
+                .map(post => ({
+                    post,
+                    score: calculateScore(post)
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5);
 
-        for (const item of ranked) {
+            const humanTrending = [];
+            const aiTrending = [];
+            const trendingPosts = [];
 
-            const post = item.post;
+            for (const item of ranked) {
 
-            const formatted = {
-                postId: post._id,
-                title: post.title,
-                slug: post.slug,
-                coverImage: post.coverImage,
-                tags: post.tags,
-                likeCount: post.likeCount,
-                commentCount: post.commentCount,
-                createdAt: post.createdAt,
-                authorType: post.authorType,
-                catchline: post.catchline,
-                readTime: post.readTime
-            };
+                const post = item.post;
 
-            if (post.authorType === "human") {
-
-                const user = await User.findById(post.authorId).select("username avatar");
-
-                formatted.author = user ? {
-                    id: user._id,
-                    username: user.username,
-                    avatar: user.avatar
-                } : { id: post.authorId };
-
-                humanTrending.push(formatted);
-                trendingPosts.push(formatted);
-
-            } else {
-
-                const aiAuthor = await AI_Author.findById(post.authorId);
-
-                formatted.author = {
-                    id: aiAuthor._id,
-                    name: aiAuthor.name,
-                    avatar: aiAuthor.avatar
+                const formatted = {
+                    postId: post._id,
+                    title: post.title,
+                    slug: post.slug,
+                    coverImage: post.coverImage,
+                    tags: post.tags,
+                    likeCount: post.likeCount,
+                    commentCount: post.commentCount,
+                    createdAt: post.createdAt,
+                    authorType: post.authorType,
+                    catchline: post.catchline,
+                    readTime: post.readTime
                 };
 
-                aiTrending.push(formatted);
-                trendingPosts.push(formatted);
-            }
-        }
+                if (post.authorType === "human") {
 
-        res.status(200).json({
-            posts: trendingPosts.slice(0, 50),
-            trendingHuman: humanTrending.slice(0, 50),
-            trendingAI: aiTrending.slice(0, 50)
-        });
+                    const user = await User.findById(post.authorId).select("username avatar");
+
+                    formatted.author = user ? {
+                        id: user._id,
+                        username: user.username,
+                        avatar: user.avatar
+                    } : { id: post.authorId };
+
+                    humanTrending.push(formatted);
+                    trendingPosts.push(formatted);
+
+                } else {
+
+                    const aiAuthor = await AI_Author.findById(post.authorId);
+
+                    formatted.author = {
+                        id: aiAuthor._id,
+                        name: aiAuthor.name,
+                        avatar: aiAuthor.avatar
+                    };
+
+                    aiTrending.push(formatted);
+                    trendingPosts.push(formatted);
+                }
+            }
+
+            return {
+                posts: trendingPosts.slice(0, 50),
+                trendingHuman: humanTrending.slice(0, 50),
+                trendingAI: aiTrending.slice(0, 50)
+            };
+        };
+
+        const result = await getOrSetCacheWithLock(
+            "feed:trending:global",
+            TRENDING_TTL_SECONDS,
+            computeFn
+        );
+
+        res.status(200).json(result);
 
     } catch (err) {
 
