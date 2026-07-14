@@ -36,7 +36,7 @@ def worker(payload: dict) -> dict:
         else "(no evidence - do not invent facts or URLs)"
     )
 
-    writer = get_llm().with_structured_output(WorkerOutput)
+    writer = get_llm().with_structured_output(WorkerOutput, method="json_mode")
     section: WorkerOutput = writer.invoke(
         [
             SystemMessage(content=WORKER_SYSTEM),

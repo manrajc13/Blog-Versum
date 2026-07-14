@@ -13,5 +13,7 @@ Rules:
 - Do not add concluding remarks for the overall blog unless this IS the
   conclusion section.
 
-Return strictly the WorkerOutput schema (section_markdown).
+Respond with a single JSON object and nothing else:
+  {"section_markdown": "<the section, as Markdown, per the rules above>"}
+No text before or after the JSON object.
 """

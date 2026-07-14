@@ -10,12 +10,13 @@ Responsibilities:
 - Keep all substantive content and any citations from the sections.
 - Do NOT re-research or invent new facts.
 
-Produce:
-- title: final blog title
-- content: the complete Markdown article (H1 title + edited sections)
-- catchline: a single-line hook
-- tags: a short list of relevant tags
-- brief_description: a 2-3 line summary
-
-Return strictly the ReducerOutput schema.
+Respond with a single JSON object and nothing else:
+  {
+    "title": "<final blog title>",
+    "content": "<the complete Markdown article, H1 title + edited sections>",
+    "catchline": "<a single-line hook>",
+    "tags": ["<short list of relevant tags>"],
+    "brief_description": "<a 2-3 line summary>"
+  }
+No text before or after the JSON object.
 """
