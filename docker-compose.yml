@@ -32,3 +32,29 @@ services:
     image: redis:7-alpine
     command: redis-server --save "" --maxmemory 256mb --maxmemory-policy allkeys-lru
     restart: unless-stopped
+
+  # Long-term memory store for the AI agents (agents/ runs on Lambda and is the
+  # ONLY consumer - the Node `app` does not touch this). Unlike `redis` (whose
+  # only consumer is on this Compose network and so keeps no `ports:`), postgres
+  # MUST publish its port because the Lambda is remote to the Docker network.
+  # Access is gated at the EC2 security group: allow 5432 from the Lambda's
+  # security group only, never 0.0.0.0/0. See PLAN_LAMBDA_DEPLOY.md (§5, §6).
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - blogverse_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  blogverse_pg_data:
