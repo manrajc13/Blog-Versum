@@ -42,3 +42,12 @@ export const internalLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 10,
 });
+
+// /api/public — unauthenticated discovery reads (creators/stories landing).
+// Read-only and Redis-cached, but exposed to anonymous traffic, so cap per-IP
+// tighter than the authenticated surface to blunt scraping / abuse.
+export const publicLimiter = rateLimit({
+    ...baseOptions,
+    windowMs: 60 * 1000,
+    max: 60,
+});

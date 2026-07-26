@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useRef, useState, useEffect } from 'react'
 import { hexToRgba } from '../store/themeConfig'
 import SearchBar from "./SearchBar";
+import BrandLogo from './shared/BrandLogo'
 import ProfilePopoverCard from './profile/ProfilePopoverCard'
 import { useAuthStore } from '../store/useAuthStore'
 import { DEFAULT_AVATAR_URL } from '../lib/defaultAvatar'
@@ -112,15 +113,7 @@ export default function Navbar({
     >
       <div className="flex items-center gap-6">
         {/* Logo */}
-        <div
-          className="flex items-center gap-2 group cursor-pointer"
-          onClick={handleHomeNavigation}
-        >
-          <div className="p-1.5 rounded-xl rotate-[-5deg] group-hover:rotate-0 transition-transform" style={{ backgroundColor: iconColor }}>
-            <span className="material-symbols-outlined text-white text-2xl">auto_stories</span>
-          </div>
-          <h2 className="text-[2.2rem] leading-none font-extrabold bouncy-text italic" style={{ color: iconColor }}>BlogVerse</h2>
-        </div>
+        <BrandLogo color={iconColor} onClick={handleHomeNavigation} />
 
         <SearchBar iconColor={iconColor} />
       </div>

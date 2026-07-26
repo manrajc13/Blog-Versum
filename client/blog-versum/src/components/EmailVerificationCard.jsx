@@ -4,6 +4,10 @@ export default function EmailVerificationCard({
   email = "",
   onResend,
   onVerify,
+  title = "Awaiting Email Verification",
+  description,
+  buttonLabel = "VERIFY OTP",
+  submittingLabel = "VERIFYING...",
 }) {
 
   const [otp, setOtp] = useState(Array(6).fill(""));
@@ -89,11 +93,15 @@ export default function EmailVerificationCard({
       {/* Heading */}
       <div>
         <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100">
-          Awaiting Email Verification
+          {title}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-          We've sent a One-Time Password (OTP) to your email.
-          Please enter it below to verify your account{email ? ` (${email})` : ""}.
+          {description ?? (
+            <>
+              We've sent a One-Time Password (OTP) to your email.
+              Please enter it below to verify your account{email ? ` (${email})` : ""}.
+            </>
+          )}
         </p>
       </div>
 
@@ -119,7 +127,7 @@ export default function EmailVerificationCard({
         disabled={!isOtpComplete || isSubmitting}
         className="w-full bg-primary text-white font-black py-4 rounded-xl shadow-lg hover:translate-y-1 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {isSubmitting ? "VERIFYING..." : "VERIFY OTP"}
+        {isSubmitting ? submittingLabel : buttonLabel}
       </button>
 
       {/* Resend */}

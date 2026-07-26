@@ -112,6 +112,39 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
+    // --- Password reset flow ---
+    forgotPassword: async (data) => {
+        try {
+            const response = await axiosInstance.post("/auth/forgot-password", data);
+            toast.success(response.data.message || "Reset code sent");
+            return true;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to send reset code");
+            return false;
+        }
+    },
+
+    verifyResetOTP: async (data) => {
+        try {
+            await axiosInstance.post("/auth/verify-reset-otp", data);
+            return true;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Invalid or expired OTP");
+            return false;
+        }
+    },
+
+    resetPassword: async (data) => {
+        try {
+            const response = await axiosInstance.post("/auth/reset-password", data);
+            toast.success(response.data.message || "Password reset successfully");
+            return true;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to reset password");
+            return false;
+        }
+    },
+
     logout: async () => {
         try{
             await axiosInstance.post("/auth/logout");

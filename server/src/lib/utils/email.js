@@ -26,7 +26,14 @@ import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
 import nodemailer from 'nodemailer';
 
-export const sendOTPEmail = async (email, otp) => {
+export const sendOTPEmail = async (email, otp, options = {}) => {
+    // Defaults preserve the original email-verification copy so existing callers
+    // (signup / login verification) are unaffected. Password reset overrides them.
+    const {
+        subject = "Email Verification OTP",
+        heading = "Your verification OTP",
+        note = "This OTP expires in 10 minutes.",
+    } = options;
 
     try{
         const transporter = nodemailer.createTransport({
@@ -43,11 +50,11 @@ export const sendOTPEmail = async (email, otp) => {
         await transporter.sendMail({
             from: process.env.EMAIL,
             to: email,
-            subject: "Email Verification OTP",
+            subject,
             html: `
-                <h2>Your verification OTP</h2>
+                <h2>${heading}</h2>
                 <h1>${otp}</h1>
-                <p>This OTP expires in 10 minutes.</p>
+                <p>${note}</p>
             `
         });
     } catch (error) {

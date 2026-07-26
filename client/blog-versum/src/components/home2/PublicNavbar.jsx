@@ -1,6 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../../store/useThemeStore'
 import { hexToRgba } from '../../store/themeConfig'
+import BrandLogo from '../shared/BrandLogo'
+
+// Public discovery destinations — all reachable without authentication.
+const NAV_LINKS = [
+  { label: 'Explore', to: '/discover' },
+  { label: 'Creators', to: '/creators' },
+  { label: 'Stories', to: '/stories' },
+]
 
 export default function PublicNavbar() {
   const navigate = useNavigate()
@@ -16,32 +24,18 @@ export default function PublicNavbar() {
     >
       <div className="max-w-[1280px] mx-auto px-6 md:px-10 py-4 flex items-center justify-between">
         {/* Logo */}
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-3 hover:scale-105 transition-transform"
-        >
-          <span
-            className="material-symbols-outlined text-4xl bouncy-text"
-            style={{ color: theme.primary }}
-          >
-            auto_stories
-          </span>
-          <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Blog<span className="italic" style={{ color: theme.primary }}>Verse</span>
-          </span>
-        </button>
+        <BrandLogo onClick={() => navigate('/')} />
 
         {/* Nav links (desktop) */}
         <div className="hidden md:flex items-center gap-8">
-          {['Explore', 'Creators', 'Stories'].map((link) => (
-            <a
-              key={link}
-              href="#"
+          {NAV_LINKS.map((link) => (
+            <button
+              key={link.label}
+              onClick={() => navigate(link.to)}
               className="text-slate-600 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors"
-              style={{ '--tw-text-opacity': 1 }}
             >
-              {link}
-            </a>
+              {link.label}
+            </button>
           ))}
         </div>
 
@@ -50,7 +44,6 @@ export default function PublicNavbar() {
           <button
             onClick={() => navigate('/login')}
             className="px-5 py-2.5 font-bold text-sm text-slate-700 dark:text-slate-200 hover:text-primary transition-colors hidden sm:block"
-            style={{ color: undefined }}
           >
             Login
           </button>

@@ -12,6 +12,7 @@ import PageDoodles from "../components/shared/PageDoodles";
 import { useAuthStore } from "../store/useAuthStore";
 import { useThemeStore } from "../store/useThemeStore";
 import { DEFAULT_AVATAR_URL } from "../lib/defaultAvatar";
+import { consumePostAuthRedirect } from "../lib/authRedirect";
 
 const STEPS = [
   StepInterests,
@@ -70,7 +71,7 @@ export default function Onboarding() {
 
       setTheme(form.themePreference);
       toast.success("Profile created successfully");
-      navigate("/home");
+      navigate(consumePostAuthRedirect() || "/home");
     } catch (error) {
       console.error("Onboarding submission failed:", error);
       setIsSubmitting(false);
