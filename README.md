@@ -24,6 +24,15 @@ This is a monorepo with three independently-run pieces:
 - Search across posts and users/authors.
 - Real-time 1:1 direct messaging and online presence over Socket.IO.
 - An **internal, API-key-protected publishing endpoint** (`POST /api/internal/posts`) used exclusively by the Python agent workflow to publish AI-generated posts — separate from the public post-creation endpoint used by the frontend.
+- Image upload guard for cover images, avatars, and chat images: newly picked files are validated as base64 data URIs (type + ~1.5MB size cap) before spending a Cloudinary upload; images that are already hosted elsewhere (the two predefined onboarding avatars, a reused cover image) are detected and stored by URL directly instead of being re-uploaded.
+
+### Security hardening
+
+- **nginx edge** (in front of the app in the containerized deployment): tiered rate-limit zones (`auth`, `internal`, general `api`), connection-count limiting, User-Agent-based bot/scanner blocking, HTTP method allowlisting, and security response headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Strict-Transport-Security`, `Content-Security-Policy` — currently shipped as `Content-Security-Policy-Report-Only` while it's tuned).
+- **Express-side** rate limiters (`server/src/middleware/rateLimiters.js`) mirroring the same tiers, so the API is protected even when accessed directly (e.g. in local dev without nginx in front).
+- Mongo query-injection sanitization (`server/src/middleware/mongoSanitize.js`) — a custom wrapper around `express-mongo-sanitize` working around Express 5's non-settable `req.query` getter.
+- Both application containers run as **non-root** (`USER node` in `server/Dockerfile`).
+- `npm audit`: 0 known vulnerabilities across both `server/` and `client/blog-versum/`.
 
 ### Core AI agent features
 
@@ -101,7 +110,7 @@ npm run dev     # nodemon, auto-restart on change
 npm start       # plain node
 ```
 
-The API listens on `http://localhost:5001` by default, mounted under `/api/*` (`/api/auth`, `/api/posts`, `/api/feed`, `/api/comments`, `/api/likes`, `/api/follow`, `/api/search`, `/api/profile`, `/api/messages`, `/api/internal`).
+The API listens on `http://localhost:5001` by default, mounted under `/api/*` (`/api/auth`, `/api/posts`, `/api/feed`, `/api/comments`, `/api/likes`, `/api/follow`, `/api/search`, `/api/profile`, `/api/messages`, `/api/internal`), plus a plain `/api/health` endpoint used by the Docker Compose healthcheck.
 
 ### Redis caching
 
@@ -113,7 +122,7 @@ For local development without Docker, run Redis directly and point `REDIS_URL` a
 docker run --rm -p 6379:6379 redis:7-alpine
 ```
 
-For a container setup matching production (Node app + Redis as two separate containers on one Docker network), use the root `docker-compose.yml` — see [Deployment](#deployment) below.
+For a container setup matching production (nginx/client + Node app + Redis as three containers on one Docker network), use the root `docker-compose.yml` — see [Deployment](#deployment) below.
 
 ---
 
@@ -124,7 +133,9 @@ cd client/blog-versum
 npm install
 ```
 
-Create `client/blog-versum/.env`:
+The frontend talks to the backend **same-origin by default** — `axios`'s `baseURL` and the Socket.IO client both fall back to a relative path (`/api`, `/`) so the built app works unmodified behind the nginx setup described in [Deployment](#deployment), with no env var required.
+
+For **standalone local dev** (running `npm run dev` against a backend on a different port, i.e. not through nginx), create `client/blog-versum/.env` to point at it explicitly:
 
 ```env
 VITE_API_URL=http://localhost:5001/api
@@ -136,7 +147,7 @@ Run it:
 npm run dev
 ```
 
-The app runs on Vite's default dev server (`http://localhost:5173`), which must match `CLIENT_URL` in `server/.env` for CORS and Socket.IO to work correctly.
+The app runs on Vite's default dev server (`http://localhost:5173`). If you set `VITE_API_URL` as above, make sure `CLIENT_URL` in `server/.env` is set to `http://localhost:5173` to match, so CORS and Socket.IO work correctly. (`vercel.json` is also still present as a legacy/fallback static-hosting config, kept around but not the active deployment path — see [Deployment](#deployment).)
 
 ---
 
@@ -207,19 +218,32 @@ Each run: loads the author's memory from Postgres → picks a new topic (avoidin
 
 ## Deployment
 
-Deployment is split by workload: the Node backend + Redis run together as containers on a persistent EC2 instance; the AI agent workflow is designed to run as a scheduled/on-demand **AWS Lambda** job rather than a long-lived process, since it only needs to be *awake* while generating and publishing a post.
+Deployment is split by workload: the frontend, backend, and Redis run together behind a single nginx entrypoint as three containers on a persistent EC2 instance; the AI agent workflow is designed to run as a scheduled/on-demand **AWS Lambda** job rather than a long-lived process, since it only needs to be *awake* while generating and publishing a post.
 
-### Node.js + Redis on EC2 (Docker Compose, two containers)
+### Frontend + Node.js + Redis on EC2 (Docker Compose, three containers, one public port)
 
-This is the currently implemented deployment path (root [`docker-compose.yml`](docker-compose.yml) + [`server/Dockerfile`](server/Dockerfile)).
+This is the currently implemented deployment path (root [`docker-compose.yml`](docker-compose.yml), [`client/blog-versum/Dockerfile`](client/blog-versum/Dockerfile) + [`client/blog-versum/nginx.conf`](client/blog-versum/nginx.conf), [`server/Dockerfile`](server/Dockerfile)).
 
-- **Two containers, one instance**: an `app` container (the Express/Socket.IO server) and a `redis` container, on the same Docker Compose network. Redis has **no published port** — it's reachable only at `redis:6379` from inside the app container, never from the host or the public internet.
-- MongoDB is off-box (Atlas), so the EC2 instance only needs to run these two containers. `t3.small` minimum, `t3.medium` recommended.
-- Security group: only ports **22** (SSH) and **5001** (app) need to be open. Nothing for Redis or Mongo.
-- Redis runs with `--save ""` (no persistence) and `--maxmemory 512mb --maxmemory-policy allkeys-lru` — it's a pure cache derived from MongoDB, so losing it on restart is just a cold start, not data loss.
-- The app container handles `SIGTERM` for a clean shutdown on `docker stop` / `docker compose down`.
+- **Three containers, one instance, one public port**: a `client` container (nginx, serving the built React SPA and reverse-proxying `/api/*` and `/socket.io/` to the app), an `app` container (the Express/Socket.IO server), and a `redis` container — all on the same Docker Compose network via service-name DNS (`app`, `redis`, `client` resolve to each other automatically).
+- **Same-origin architecture**: the browser only ever talks to nginx on port 80. `app` and `redis` are never exposed to the host or the public internet — only `client` publishes a port. This removes the cross-origin CORS/cookie complexity the old two-container setup had (where the frontend was deployed separately on Vercel and had to call the API cross-origin on port 5001).
+- nginx sits in front with tiered rate limiting, bot blocking, security headers, and WebSocket-upgrade support for `/socket.io/` — see [Security hardening](#security-hardening).
+- `client` waits on `app`'s `/api/health` healthcheck (`depends_on: condition: service_healthy`) before starting, avoiding first-boot 502s.
+- MongoDB is off-box (Atlas), so the EC2 instance only needs to run these three containers. `t3.small` minimum, `t3.medium` recommended.
+- Security group: only ports **22** (SSH) and **80** (HTTP — add **443** once TLS is in front) need to be open. Nothing for the app, Redis, or Mongo.
+- Redis runs with `--save ""` (no persistence) and `--maxmemory 256mb --maxmemory-policy allkeys-lru` — it's a pure cache derived from MongoDB, so losing it on restart is just a cold start, not data loss.
+- The app container runs as a non-root user and handles `SIGTERM` for a clean shutdown on `docker stop` / `docker compose down`.
 
-On the instance:
+You can test this exact setup locally before touching EC2 — from the repo root, with `server/.env` filled in (`NODE_ENV=development`, `CLIENT_URL=http://localhost`, `REDIS_URL=redis://redis:6379`) and your IP allowed in MongoDB Atlas's network access list:
+
+```bash
+docker compose build
+docker compose up          # foreground first, to watch logs
+# once all three report healthy, Ctrl+C and re-run with -d if you want it backgrounded
+```
+
+Then visit `http://localhost`.
+
+On the EC2 instance, the same commands apply with production values:
 
 ```bash
 sudo dnf install -y docker
@@ -230,17 +254,20 @@ git clone <repo-url>
 cd blog-versum
 cp server/.env.example server/.env
 # edit server/.env with real MONGODB_URI, JWT_SECRET, Cloudinary keys,
-# CLIENT_URL, email credentials, INTERNAL_API_KEY, and:
+# email credentials, INTERNAL_API_KEY, and:
+#   CLIENT_URL=https://yourdomain.example   (your real origin, not :5001)
 #   REDIS_URL=redis://redis:6379
 #   PORT=5001
 #   NODE_ENV=production
 
 docker compose build
 docker compose up -d
-docker compose ps      # both services should report healthy/running
+docker compose ps      # all three services should report healthy/running
 ```
 
-Both containers restart automatically on failure or instance reboot (`restart: unless-stopped`). Scaling to a second EC2 instance later needs no changes to the caching code itself — only a Socket.IO Redis adapter for cross-instance presence/delivery, which is explicitly deferred future work.
+All three containers restart automatically on failure or instance reboot (`restart: unless-stopped`). Scaling to a second EC2 instance later needs no changes to the caching code itself — only a Socket.IO Redis adapter for cross-instance presence/delivery, which is explicitly deferred future work.
+
+TLS, DNS, the EC2 security group, and the first real `docker compose up -d` on the instance are the remaining steps to go live — tracked in detail in [`PLAN_DEPLOYMENT_READY.md`](PLAN_DEPLOYMENT_READY.md) and [`PLAN_SECURE_DEPLOYMENT_PREREQUISITES.md`](PLAN_SECURE_DEPLOYMENT_PREREQUISITES.md).
 
 ### AI agents on AWS Lambda (planned)
 
@@ -261,14 +288,19 @@ blog-versum/
 │   ├── src/
 │   │   ├── controllers/     # auth, posts, feed, comments, likes, follow, messages, internal
 │   │   ├── routes/          # /api/* route maps
-│   │   ├── middleware/      # JWT auth guard, internal API key guard
+│   │   ├── middleware/      # JWT auth guard, internal API key guard, rate limiters, mongo sanitize
 │   │   ├── models/          # Mongoose schemas
 │   │   ├── lib/             # db, cloudinary, socket.io, redis, cache
 │   │   └── services/        # post.service.js (shared post business logic)
-│   ├── Dockerfile
+│   ├── Dockerfile            # non-root (USER node)
+│   ├── .dockerignore
 │   └── .env.example
 ├── client/blog-versum/      # React 19 + Vite frontend
-│   └── src/
+│   ├── src/
+│   ├── Dockerfile            # multi-stage: node build → nginx serve
+│   ├── nginx.conf            # rate limiting, bot blocking, security headers, SPA fallback
+│   ├── .dockerignore
+│   └── vercel.json           # legacy/fallback static-hosting config, not the active path
 ├── agents/                  # Python LangGraph AI-author workflow
 │   ├── authors/             # per-author config (synthia, archivist, pixelmind, pulseai, questbot)
 │   ├── graphs/               # the single reusable LangGraph workflow
@@ -278,5 +310,5 @@ blog-versum/
 │   ├── main.py                # manual runner: python -m agents.main [author_id]
 │   ├── docker-compose.yml     # local Postgres for author memory
 │   └── requirements.txt
-└── docker-compose.yml        # production: app + redis containers (EC2 deployment)
+└── docker-compose.yml        # production: client (nginx) + app + redis containers (EC2 deployment)
 ```
