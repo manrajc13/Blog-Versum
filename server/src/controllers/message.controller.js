@@ -3,6 +3,7 @@ import Message from "../models/message.model.js";
 import Follow from "../models/follow.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import {getReceiverSocketId, io} from "../lib/socket.js";
+import { assertImageOk } from "../lib/utils/imageUpload.js";
 
 export const getUsersForSidebar = async(req, res) => {
     try{
@@ -91,6 +92,7 @@ export const sendMessage = async (req, res) => {
 
         let imageUrl;
         if (image){
+            assertImageOk(image);
             const uploadResponse = await cloudinary.uploader.upload(image);
             imageUrl = uploadResponse.secure_url;
         }
@@ -111,9 +113,13 @@ export const sendMessage = async (req, res) => {
         }
 
         res.status(201).json(newMessage);
-        
+
     } catch (error) {
-        console.log("Error in sendMessage controller ", error.message);
-        res.status(500).json({message: "Internal Server Error"});
+        const status = error.status || 500;
+        if (status === 500) {
+            console.error("Error in sendMessage controller ", error);
+            return res.status(500).json({message: "Internal Server Error"});
+        }
+        return res.status(status).json({message: error.message});
     }
-} 
+}

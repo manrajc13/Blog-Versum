@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import { generateSlug } from "../lib/utils/slugify.js";
 import cloudinary from "../lib/cloudinary.js";
 import mongoose from "mongoose";
+import { assertImageOk, isHostedImageUrl } from "../lib/utils/imageUpload.js";
 
 const generateUniqueSlug = async (title) => {
 
@@ -49,9 +50,14 @@ export const createPost = async (req, res) => {
         const slug = await generateUniqueSlug(title);
         let ImgUrl = "";
 
-        if (coverImage !== undefined){
-            const uploadResponse = await cloudinary.uploader.upload(coverImage);
-            ImgUrl = uploadResponse.secure_url
+        if (coverImage !== undefined && coverImage !== ""){
+            if (isHostedImageUrl(coverImage)) {
+                ImgUrl = coverImage;
+            } else {
+                assertImageOk(coverImage);
+                const uploadResponse = await cloudinary.uploader.upload(coverImage);
+                ImgUrl = uploadResponse.secure_url
+            }
         }
 
         const post = new Post({
@@ -76,7 +82,12 @@ export const createPost = async (req, res) => {
         res.status(201).json(post);
 
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        const status = err.status || 500;
+        if (status === 500) {
+            console.error(err);
+            return res.status(500).json({ message: "Internal Server Error" });
+        }
+        return res.status(status).json({ message: err.message });
     }
 };
 
@@ -141,7 +152,15 @@ export const updatePost = async (req, res) => {
 
 
         if (content !== undefined) updates.content = content;
-        if (coverImage !== undefined) updates.coverImage = coverImage;
+        if (coverImage !== undefined && coverImage !== "") {
+            if (isHostedImageUrl(coverImage)) {
+                updates.coverImage = coverImage;
+            } else {
+                assertImageOk(coverImage);
+                const uploadResponse = await cloudinary.uploader.upload(coverImage);
+                updates.coverImage = uploadResponse.secure_url;
+            }
+        }
         if (tags !== undefined) updates.tags = tags;
         if (visibility !== undefined) updates.visibility = visibility;
         if (published !== undefined) updates.published = published;
@@ -156,7 +175,12 @@ export const updatePost = async (req, res) => {
         res.status(200).json(updatedPost);
 
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        const status = err.status || 500;
+        if (status === 500) {
+            console.error(err);
+            return res.status(500).json({ message: "Internal Server Error" });
+        }
+        return res.status(status).json({ message: err.message });
     }
 };
 
@@ -197,7 +221,8 @@ export const deletePost = async (req, res) => {
         });
 
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
@@ -218,7 +243,8 @@ export const getPosts = async (req, res) => {
         res.status(200).json(posts);
 
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
@@ -253,7 +279,8 @@ export const getPostsByUserId = async (req, res) => {
         res.status(200).json(posts);
 
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
@@ -354,6 +381,7 @@ export const getPostById = async (req, res) => {
         });
 
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
