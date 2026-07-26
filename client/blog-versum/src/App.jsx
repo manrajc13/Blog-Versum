@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
 import Home2 from './pages/Home2'
 import Settings from './pages/settings/Settings'
@@ -9,6 +10,8 @@ import MyJournal from './pages/Myjournal'
 import CreatePost from './pages/Createpost'
 import ViewBlogPage from './pages/ViewBlogPage'
 import Explore from './pages/Explore'
+import Creators from './pages/Creators'
+import Stories from './pages/Stories'
 import MessagePage from './pages/MessagePage'
 import { useEffect } from 'react'
 import {useAuthStore} from "./store/useAuthStore"
@@ -43,6 +46,11 @@ function App() {
         <Route path="/" element={<PublicRoute authUser={authUser}><Home2 /></PublicRoute>} />
         <Route path="/login" element={<PublicRoute authUser={authUser}><Login /></PublicRoute>} />
         <Route path="/signup" element={<PublicRoute authUser={authUser}><Signup /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute authUser={authUser}><ForgotPassword /></PublicRoute>} />
+        {/* Public discovery — reachable without authentication */}
+        <Route path="/creators" element={<Creators />} />
+        <Route path="/stories" element={<Stories />} />
+        <Route path="/discover" element={<Explore authUser={authUser} />} />
         <Route path="/onboarding" element={<AuthGuard authUser={authUser}><Onboarding/></AuthGuard>}/>
         <Route path="/home" element={<AuthGuard authUser={authUser}><Home authUser={authUser} /></AuthGuard>} />
         <Route path="/explore" element={

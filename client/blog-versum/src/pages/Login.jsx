@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import SocialAuthButtons from '../components/SocialAuthButtons'
+// import SocialAuthButtons from '../components/SocialAuthButtons'
 import EmailVerificationCard from '../components/EmailVerificationCard'
 import PageDoodles from '../components/shared/PageDoodles'
+import BrandLogo from '../components/shared/BrandLogo'
+import { consumePostAuthRedirect } from '../lib/authRedirect'
 import { useAuthStore } from "../store/useAuthStore";
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
@@ -31,7 +33,7 @@ export default function Login() {
       });
 
       if (loggedIn) {
-        navigate('/home');
+        navigate(consumePostAuthRedirect() || '/home');
         return true;
       }
       return false;
@@ -90,15 +92,10 @@ export default function Login() {
       <PageDoodles variant="corners" />
       {/* Header */}
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-primary/10 px-6 md:px-10 py-4 bg-white dark:bg-[#221014]">
-        <div className="flex items-center gap-3 text-slate-900 dark:text-slate-100 cursor-pointer" onClick={() => navigate('/home')}>
-          <span className="material-symbols-outlined text-4xl text-primary">auto_stories</span>
-          <h2 className="text-2xl font-black leading-tight tracking-tight">BlogVerse</h2>
-        </div>
+        <BrandLogo onClick={() => navigate('/')} />
         <div className="flex items-center gap-6">
           <nav className="hidden md:flex items-center gap-8">
-            <button onClick={() => navigate('/home')} className="text-slate-700 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors">Home</button>
-            <a className="text-slate-700 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors" href="#">Explore</a>
-            <a className="text-slate-700 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors" href="#">Community</a>
+            <button onClick={() => navigate('/')} className="text-slate-700 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors">Home</button>
           </nav>
           <button
             onClick={() => navigate('/signup')}
@@ -207,7 +204,7 @@ export default function Login() {
                         <input className="w-5 h-5 rounded border-2 border-bubbly-teal text-bubbly-teal focus:ring-bubbly-teal/30" type="checkbox" />
                         <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Remember me</span>
                       </label>
-                      <a className="text-sm font-black text-primary hover:underline" href="#">Forgot Password?</a>
+                      <button type="button" onClick={() => navigate('/forgot-password')} className="text-sm font-black text-primary hover:underline">Forgot Password?</button>
                     </div>
 
                     {/* Submit */}
@@ -228,16 +225,16 @@ export default function Login() {
                   </form>
 
                   {/* Divider */}
-                  <div className="relative my-8">
+                  {/* <div className="relative my-8">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t-2 border-slate-100 dark:border-slate-800"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
                       <span className="px-4 bg-white dark:bg-[#221014] text-slate-500 font-bold uppercase tracking-widest">Or continue with</span>
                     </div>
-                  </div>
+                  </div> */}
 
-                  <SocialAuthButtons />
+                  {/* <SocialAuthButtons /> */}
 
                   <p className="mt-8 text-center font-bold text-slate-600 dark:text-slate-400">
                     Don&apos;t have an account?{' '}

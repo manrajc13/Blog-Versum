@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import SocialAuthButtons from '../components/SocialAuthButtons'
 import EmailVerificationCard from '../components/EmailVerificationCard'
 import PageDoodles from '../components/shared/PageDoodles'
+import BrandLogo from '../components/shared/BrandLogo'
 import { useAuthStore } from "../store/useAuthStore";
 import {toast} from "react-hot-toast";
 import {Loader2} from "lucide-react";
@@ -114,20 +115,12 @@ export default function Signup() {
     <div className="layout-container flex h-full grow flex-col min-h-screen bg-[#f7f5f8] dark:bg-[#1b1022] font-display relative">
       <PageDoodles variant="corners" />
       {/* Header */}
-      <header className="flex items-center justify-between whitespace-nowrap px-10 py-5">
-        <div
-          className="flex items-center gap-4 text-primary cursor-pointer"
-          onClick={() => navigate('/home')}
-        >
-          <div className="size-8">
-            <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-black leading-tight tracking-tight">BlogVerse</h2>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Already a member?</span>
+      <header className="flex items-center justify-between whitespace-nowrap px-6 md:px-10 py-5">
+        <BrandLogo onClick={() => navigate('/')} />
+        <div className="flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-8">
+            <button onClick={() => navigate('/')} className="text-slate-700 dark:text-slate-300 text-sm font-bold hover:text-primary transition-colors">Home</button>
+          </nav>
           <button
             onClick={() => navigate('/login')}
             className="flex min-w-[84px] cursor-pointer items-center justify-center rounded-full h-10 px-5 bg-primary/10 text-primary text-sm font-bold border-2 border-primary/20 hover:bg-primary/20 transition-all"
@@ -264,12 +257,12 @@ export default function Signup() {
                 </form>
 
                 {/* Divider */}
-                <div className="relative my-10 text-center">
+                {/* <div className="relative my-10 text-center">
                   <span className="bg-white dark:bg-slate-800 px-4 relative z-10 text-sm font-bold text-slate-400 uppercase tracking-widest">Or sign up with</span>
                   <div className="absolute top-1/2 left-0 w-full h-px bg-slate-200 dark:bg-slate-700"></div>
-                </div>
+                </div> */}
 
-                <SocialAuthButtons />
+                {/* <SocialAuthButtons /> */}
 
                 <p className="mt-8 text-center text-xs text-slate-400 font-medium">
                   By signing up, you agree to our{' '}

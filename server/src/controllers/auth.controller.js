@@ -214,6 +214,129 @@ export const sendOTP = async (req, res) => {
     }
 };
 
+/*
+Forgot-password flow (3 steps):
+  1. forgotPassword     — email a single-use reset OTP to the account on file.
+  2. verifyResetOTP     — check the OTP is valid WITHOUT consuming it (UX gate
+                          so the user knows the code is good before typing a new
+                          password). Reset only happens in step 3.
+  3. resetPassword      — re-validate the OTP and set the new password atomically,
+                          then clear the reset fields (single use).
+
+Uses dedicated resetPasswordOTP / resetPasswordExpires fields so a reset code can
+never be substituted for an email-verification code (emailOTP) or vice versa.
+Responses are deliberately generic to avoid leaking whether an account exists.
+*/
+export const forgotPassword = async (req, res) => {
+    // identifier may be an email or a username (matches login / sendOTP behaviour).
+    const identifier = req.body?.email ?? req.body?.username;
+    // Generic response used whether or not the account exists (no user enumeration).
+    const genericResponse = { message: "If an account exists for that address, a reset code has been sent." };
+
+    try {
+        const identifierQuery = getIdentifierQuery(identifier);
+        if (!identifierQuery) {
+            return res.status(400).json({ message: "Email or username is required" });
+        }
+
+        const user = await User.findOne(identifierQuery);
+
+        // Do not reveal absence — respond the same as the success path.
+        if (!user) {
+            return res.status(200).json(genericResponse);
+        }
+
+        const otp = generateOTP();
+        user.resetPasswordOTP = otp.hashedOTP;
+        user.resetPasswordExpires = otp.expires;
+        await user.save();
+
+        await sendOTPEmail(user.email, otp.plainOTP, {
+            subject: "Password Reset OTP",
+            heading: "Your password reset code",
+            note: "Use this code to reset your password. It expires in 10 minutes. If you didn't request this, you can safely ignore this email.",
+        });
+
+        res.status(200).json(genericResponse);
+    } catch (error) {
+        console.error("Error in forgotPassword controller:", error.message);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+// Validates the reset OTP without consuming it (see flow note above).
+export const verifyResetOTP = async (req, res) => {
+    const identifier = req.body?.email ?? req.body?.username;
+    const { otp } = req.body || {};
+
+    try {
+        const identifierQuery = getIdentifierQuery(identifier);
+        if (!identifierQuery || !otp) {
+            return res.status(400).json({ message: "Email and OTP are required" });
+        }
+
+        const hashedOTP = crypto.createHash("sha256").update(String(otp)).digest("hex");
+
+        const user = await User.findOne({
+            ...identifierQuery,
+            resetPasswordOTP: hashedOTP,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired OTP" });
+        }
+
+        res.status(200).json({ message: "OTP verified" });
+    } catch (error) {
+        console.error("Error in verifyResetOTP controller:", error.message);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+// Re-validates the OTP and sets the new password atomically, then clears the
+// reset fields so the code cannot be reused.
+export const resetPassword = async (req, res) => {
+    const identifier = req.body?.email ?? req.body?.username;
+    const { otp, newPassword } = req.body || {};
+
+    try {
+        const identifierQuery = getIdentifierQuery(identifier);
+        if (!identifierQuery || !otp) {
+            return res.status(400).json({ message: "Email and OTP are required" });
+        }
+        if (!newPassword || newPassword.length < 8) {
+            return res.status(400).json({ message: "Password must be at least 8 characters" });
+        }
+
+        const hashedOTP = crypto.createHash("sha256").update(String(otp)).digest("hex");
+
+        const user = await User.findOne({
+            ...identifierQuery,
+            resetPasswordOTP: hashedOTP,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired OTP" });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        // Owning the reset code proves control of the email, so treat the account
+        // as verified — otherwise a reset could dead-end at the "not verified" gate.
+        user.isVerified = true;
+        user.resetPasswordOTP = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.status(200).json({ message: "Password reset successfully" });
+    } catch (error) {
+        console.error("Error in resetPassword controller:", error.message);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
 export const updateProfile = async (req, res) => {
     const {_id, username} = req.user;    
     const {isPrivate, avatar, bio, interests, themePreference} = req.body;

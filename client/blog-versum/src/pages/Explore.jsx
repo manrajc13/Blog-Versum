@@ -19,10 +19,12 @@
  * Background: Hand-drawn doodles spread across the page
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import PublicNavbar from '../components/home2/PublicNavbar'
 import Footer from '../components/Footer'
+import LoginPromptModal from '../components/shared/LoginPromptModal'
 import TopicDeck from '../components/explore/Topicdeck'
 import MasonryFeed from '../components/explore/MasonryFeed'
 import ExploreBackground from '../components/explore/ExploreBackground'
@@ -33,6 +35,18 @@ import { EXPLORE_TOPICS } from '../lib/Mockexploredata'
 export default function Explore({ authUser }) {
   const navigate = useNavigate()
   const theme = useThemeStore((state) => state.getTheme())
+
+  // Same page, two audiences: logged-out visitors reach this via the public
+  // navbar and get the public chrome + a login gate on write actions.
+  const isPublic = !authUser
+  const [gate, setGate] = useState({ open: false, redirectTo: null })
+  const handleWrite = () => {
+    if (isPublic) {
+      setGate({ open: true, redirectTo: '/journal/create' })
+    } else {
+      navigate('/journal/create')
+    }
+  }
 
   const [activeTopicId, setActiveTopicId] = useState(EXPLORE_TOPICS[0].id)
   const [showStories, setShowStories] = useState(false)
@@ -70,7 +84,7 @@ export default function Explore({ authUser }) {
     }, 200)
   }
 
-  const handleDiscoverStories = (topic) => {
+  const handleDiscoverStories = () => {
     setIsLoadingStories(true)
     // Simulate fetching
     setTimeout(() => {
@@ -92,18 +106,22 @@ export default function Explore({ authUser }) {
       <ExploreBackground />
 
       <div className="relative z-10 layout-container flex h-full grow flex-col">
-        <Navbar
-          iconColor={theme.primary}
-          activeLink="Explore"
-          onNotificationClick={() => navigate('/settings?tab=Notifications')}
-          navLinks={[
-            { label: 'Home', to: '/home' },
-            { label: 'Explore', to: '/explore' },
-            { label: 'My Journal', to: '/journal' },
-            { label: 'Settings', to: '/settings' },
-          ]}
-          avatarUrl={authUser?.avatar}
-        />
+        {isPublic ? (
+          <PublicNavbar />
+        ) : (
+          <Navbar
+            iconColor={theme.primary}
+            activeLink="Explore"
+            onNotificationClick={() => navigate('/settings?tab=Notifications')}
+            navLinks={[
+              { label: 'Home', to: '/home' },
+              { label: 'Explore', to: '/explore' },
+              { label: 'My Journal', to: '/journal' },
+              { label: 'Settings', to: '/settings' },
+            ]}
+            avatarUrl={authUser?.avatar}
+          />
+        )}
 
         <main className="max-w-[1100px] mx-auto w-full px-6 md:px-10 py-10">
 
@@ -247,7 +265,7 @@ export default function Explore({ authUser }) {
                   Inspired by what you read? Share your own perspective.
                 </p>
                 <button
-                  onClick={() => navigate('/journal/create')}
+                  onClick={handleWrite}
                   className="text-white font-extrabold py-3 px-8 rounded-full transition-all hover:scale-105 active:scale-95"
                   style={{
                     backgroundColor: theme.primary,
@@ -331,7 +349,7 @@ export default function Explore({ authUser }) {
               &ldquo;{activeTopic.tagline}&rdquo;
             </p>
             <button
-              onClick={() => navigate('/journal/create')}
+              onClick={handleWrite}
               className="w-full bg-white font-extrabold py-2.5 rounded-xl text-sm transition-all hover:bg-slate-50"
               style={{ color: theme.primary }}
             >
@@ -343,6 +361,14 @@ export default function Explore({ authUser }) {
 
         <Footer iconColor={theme.primary} />
       </div>
+
+      <LoginPromptModal
+        open={gate.open}
+        onClose={() => setGate({ open: false, redirectTo: null })}
+        redirectTo={gate.redirectTo}
+        title="Start writing on BlogVerse"
+        description="Log in or create a free account to publish your own story to the Verse."
+      />
     </div>
   )
 }
