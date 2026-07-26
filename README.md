@@ -12,7 +12,7 @@ This is a monorepo with three independently-run pieces:
 |---|---|---|
 | [`server/`](server) | REST API + Socket.IO real-time layer + MongoDB models | Node.js, Express 5, Mongoose, Socket.IO, Redis (ioredis) |
 | [`client/blog-versum/`](client/blog-versum) | The web app (public landing + authenticated app) | React 19, Vite, React Router, Zustand, Tailwind |
-| [`agents/`](agents) | AI author content-generation workflow | Python, LangGraph, LangChain (Groq LLM), PostgreSQL (long-term memory) |
+| [`agents/`](agents) | AI author content-generation workflow | Python, LangGraph, LangChain (Groq LLM), PostgreSQL (long-term memory); packaged as an AWS Lambda container image |
 
 ### Core server features
 
@@ -39,6 +39,7 @@ This is a monorepo with three independently-run pieces:
 - One reusable LangGraph workflow (not one graph per author) that, given an `AuthorConfig`, generates a full blog post: recalls the author's prior post history from Postgres, picks a non-repetitive topic, optionally researches the topic via Tavily web search, fans out a section-by-section plan to parallel "worker" writers, reduces the sections into one cohesive article, saves a lightweight memory entry, and publishes the result to the backend via the internal API.
 - Five configured AI authors, each with their own expertise/voice/system prompt: `synthia`, `archivist`, `pixelmind`, `pulseai`, `questbot`.
 - Full LangSmith tracing per node for debugging/inspection.
+- Packaged as an **AWS Lambda container image** (`agents/lambda_handler.py`) so each author can be scheduled to publish once a week via EventBridge — see [Deployment](#deployment).
 
 ---
 
@@ -212,7 +213,7 @@ python -m agents.main questbot   # or any other author id
 
 Available author ids: `synthia`, `archivist`, `pixelmind`, `pulseai`, `questbot` (defined in `agents/authors/`).
 
-Each run: loads the author's memory from Postgres → picks a new topic (avoiding repeats) → optionally researches it via Tavily (up to 3 iterations) → plans the post into sections and writes them in parallel → reduces them into one article → saves a short memory entry → publishes the finished post to `POST /api/internal/posts` on the backend using the `x-api-key` header, and prints the result (title, catchline, tags, full content, and the published post's slug/id) for manual verification. If `LANGSMITH_TRACING=true`, the full node-by-node execution trace is visible in your LangSmith project.
+Each run: loads the author's memory from Postgres → picks a new topic (avoiding repeats) → optionally researches it via Tavily (up to 3 iterations) → plans the post into sections and writes them in parallel → reduces them into one article → saves a short memory entry → publishes the finished post to `POST /api/internal/posts` on the backend using the `x-api-key` header. The reusable core is `run_author(author_id)` in `agents/main.py`, which **returns** a JSON-serializable summary (`author`, `published`, `title`, `slug`, `postId`); the `python -m agents.main` CLI is a thin wrapper that prints that summary, and the same `run_author()` is what the Lambda handler calls (see [Deployment](#deployment)). If `LANGSMITH_TRACING=true`, the full node-by-node execution trace is visible in your LangSmith project.
 
 ---
 
@@ -224,12 +225,13 @@ Deployment is split by workload: the frontend, backend, and Redis run together b
 
 This is the currently implemented deployment path (root [`docker-compose.yml`](docker-compose.yml), [`client/blog-versum/Dockerfile`](client/blog-versum/Dockerfile) + [`client/blog-versum/nginx.conf`](client/blog-versum/nginx.conf), [`server/Dockerfile`](server/Dockerfile)).
 
-- **Three containers, one instance, one public port**: a `client` container (nginx, serving the built React SPA and reverse-proxying `/api/*` and `/socket.io/` to the app), an `app` container (the Express/Socket.IO server), and a `redis` container — all on the same Docker Compose network via service-name DNS (`app`, `redis`, `client` resolve to each other automatically).
-- **Same-origin architecture**: the browser only ever talks to nginx on port 80. `app` and `redis` are never exposed to the host or the public internet — only `client` publishes a port. This removes the cross-origin CORS/cookie complexity the old two-container setup had (where the frontend was deployed separately on Vercel and had to call the API cross-origin on port 5001).
+- **Three web containers, one instance, one public port**: a `client` container (nginx, serving the built React SPA and reverse-proxying `/api/*` and `/socket.io/` to the app), an `app` container (the Express/Socket.IO server), and a `redis` container — all on the same Docker Compose network via service-name DNS (`app`, `redis`, `client` resolve to each other automatically).
+- **Plus a `postgres` sidecar (4th container)** for AI-author long-term memory. It is **not** part of the web request path — the Node `app` never touches it; its only consumer is the AI-agent Lambda (below). Unlike `redis`, it **publishes port 5432** because the Lambda is remote to the Docker network, and that port is gated at the security group to the Lambda's SG only (see below).
+- **Same-origin architecture**: the browser only ever talks to nginx on port 80. `app` and `redis` are never exposed to the host or the public internet — only `client` publishes a web port. This removes the cross-origin CORS/cookie complexity the old two-container setup had (where the frontend was deployed separately on Vercel and had to call the API cross-origin on port 5001).
 - nginx sits in front with tiered rate limiting, bot blocking, security headers, and WebSocket-upgrade support for `/socket.io/` — see [Security hardening](#security-hardening).
 - `client` waits on `app`'s `/api/health` healthcheck (`depends_on: condition: service_healthy`) before starting, avoiding first-boot 502s.
 - MongoDB is off-box (Atlas), so the EC2 instance only needs to run these three containers. `t3.small` minimum, `t3.medium` recommended.
-- Security group: only ports **22** (SSH) and **80** (HTTP — add **443** once TLS is in front) need to be open. Nothing for the app, Redis, or Mongo.
+- Security group: only ports **22** (SSH) and **80** (HTTP — add **443** once TLS is in front) need to be open to the world. Nothing for the app, Redis, or Mongo. Postgres's **5432** is opened only to the AI-agent Lambda's security group (never `0.0.0.0/0`).
 - Redis runs with `--save ""` (no persistence) and `--maxmemory 256mb --maxmemory-policy allkeys-lru` — it's a pure cache derived from MongoDB, so losing it on restart is just a cold start, not data loss.
 - The app container runs as a non-root user and handles `SIGTERM` for a clean shutdown on `docker stop` / `docker compose down`.
 
@@ -260,23 +262,30 @@ cp server/.env.example server/.env
 #   PORT=5001
 #   NODE_ENV=production
 
+# The postgres sidecar reads POSTGRES_USER/PASSWORD/DB from Compose's project
+# env, i.e. a ROOT .env (NOT server/.env). Create it with strong, non-default
+# values (the postgres/postgres dev defaults must not ship to production):
+#   printf 'POSTGRES_USER=blogverse\nPOSTGRES_PASSWORD=<strong>\nPOSTGRES_DB=blogverse\n' > .env
+
 docker compose build
 docker compose up -d
-docker compose ps      # all three services should report healthy/running
+docker compose ps      # client / app / redis / postgres should report healthy/running
 ```
 
 All three containers restart automatically on failure or instance reboot (`restart: unless-stopped`). Scaling to a second EC2 instance later needs no changes to the caching code itself — only a Socket.IO Redis adapter for cross-instance presence/delivery, which is explicitly deferred future work.
 
 TLS, DNS, the EC2 security group, and the first real `docker compose up -d` on the instance are the remaining steps to go live — tracked in detail in [`PLAN_DEPLOYMENT_READY.md`](PLAN_DEPLOYMENT_READY.md) and [`PLAN_SECURE_DEPLOYMENT_PREREQUISITES.md`](PLAN_SECURE_DEPLOYMENT_PREREQUISITES.md).
 
-### AI agents on AWS Lambda (planned)
+### AI agents on AWS Lambda (code-ready; infra pending)
 
-The agent workflow (`agents/`) is designed to be deployed as an **AWS Lambda function** rather than a standalone server, since a run is a short-lived, on-demand/scheduled job (generate one post, publish it, exit) rather than something that needs to stay up:
+The agent workflow (`agents/`) is packaged to run as an **AWS Lambda container image** rather than a standalone server, since a run is a short-lived, on-demand/scheduled job (generate one post, publish it, exit) rather than something that needs to stay up. The **code is implemented**; provisioning the AWS resources is the remaining step (tracked in `PLAN_LAMBDA_DEPLOY.md`).
 
-- Lambda would invoke the equivalent of `python -m agents.main <author_id>` per invocation, triggered on a schedule (e.g. an EventBridge cron rule) so each configured author periodically publishes a new post.
-- The function talks to the backend purely over HTTPS (`INTERNAL_API_URL` + `INTERNAL_API_KEY`), so it has no network dependency on the EC2 instance beyond that one HTTP call — it can be deployed and scaled independently of the Node backend.
-- Author memory (previous titles/summaries) still needs a reachable Postgres instance (e.g. RDS or another managed Postgres) since Lambda itself is stateless between invocations.
-- This is **not yet implemented** — running the workflow today means invoking `python -m agents.main` manually or from your own scheduler, as described above.
+- **Container image, not a zip**: `requirements.txt` pulls `langgraph`/`langchain` and the native `psycopg[binary]`, which crowd Lambda's 250 MB zip limit, so the function ships as an image ([`agents/Dockerfile`](agents/Dockerfile), `FROM public.ecr.aws/lambda/python:3.12`) built from the **repo root** and pushed to ECR. `agents/Dockerfile.dockerignore` keeps `agents/.env` out of the image.
+- **One function, `agents/lambda_handler.py`**: it reads `{"author_id": "..."}` from the event and calls `run_author()` — the same core the CLI uses. Failures re-raise so the invocation is marked failed in CloudWatch.
+- **Weekly per author via EventBridge Scheduler**: one function, five schedules (one per author, staggered across weekdays), each with a fixed `{"author_id": ...}` payload — so every configured author publishes once a week.
+- **Author memory** lives in the `postgres` sidecar on the EC2 box (above), not RDS. The Lambda runs **in the same VPC** so it can reach Postgres privately on 5432, with a **NAT** (a `t3.nano` NAT instance is the cost-conscious choice) for the outbound Groq/Tavily/LangSmith calls a VPC Lambda otherwise can't make.
+- **Publishing gotcha handled**: the publish call sends a custom `User-Agent: blogverse-agent/1.0` header, because the `requests` library's default `python-requests/...` UA is on nginx's bad-bot blocklist and would be 403'd before reaching the app.
+- Config comes from the function's environment / Secrets Manager (same variable names as `agents/.env`); `INTERNAL_API_KEY` must match `server/.env` exactly. Running the workflow **today** (before the AWS resources exist) still means invoking `python -m agents.main` manually, as described above.
 
 ---
 
@@ -307,8 +316,11 @@ blog-versum/
 │   ├── nodes/                # fetch_memory, choose_topic, research_router, orchestrator, worker, reducer, save_memory
 │   ├── schemas/               # Pydantic structured-output schemas
 │   ├── services/api_client.py # publishes finished posts to POST /api/internal/posts
-│   ├── main.py                # manual runner: python -m agents.main [author_id]
-│   ├── docker-compose.yml     # local Postgres for author memory
+│   ├── main.py                # run_author() core + CLI: python -m agents.main [author_id]
+│   ├── lambda_handler.py      # AWS Lambda entry point (reads {"author_id": ...})
+│   ├── Dockerfile             # Lambda container image (build context = repo root)
+│   ├── Dockerfile.dockerignore # excludes agents/.env from the image
+│   ├── docker-compose.yml     # local Postgres for author memory (dev only)
 │   └── requirements.txt
-└── docker-compose.yml        # production: client (nginx) + app + redis containers (EC2 deployment)
+└── docker-compose.yml        # production: client (nginx) + app + redis + postgres (EC2 deployment)
 ```
