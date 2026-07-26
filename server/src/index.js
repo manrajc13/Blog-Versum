@@ -1,6 +1,8 @@
 import express from 'express';
 import dotenv from "dotenv";
 import cors from 'cors';
+import helmet from "helmet";
+import hpp from "hpp";
 dotenv.config();
 
 import authRoutes from './routes/auth.route.js';
@@ -17,19 +19,32 @@ import connectDB from "./lib/db.js";
 import cookieParser from "cookie-parser";
 import dns from "dns";
 import { app, server } from "./lib/socket.js";
+import mongoSanitize from "./middleware/mongoSanitize.js";
+import { globalLimiter } from "./middleware/rateLimiters.js";
 
 const PORT = process.env.PORT;
 
 // Force IPv4 DNS resolution — fixes ENETUNREACH on Render (IPv6 not routable)
 dns.setDefaultResultOrder('ipv4first');
 
+// Single reverse proxy hop (nginx) in front of Express — needed so req.ip reflects
+// the real client IP from X-Forwarded-For, which per-IP rate limiting depends on.
+app.set("trust proxy", 1);
+
 app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(helmet());
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(cookieParser());
+app.use(mongoSanitize());
+app.use(hpp());
+app.use("/api", globalLimiter);
+
+app.get("/api/health", (req, res) => res.json({ status: "ok" }));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api/posts", postRoutes);
@@ -52,4 +67,11 @@ server.listen(PORT, () => {
 process.on("SIGTERM", async () => {
     console.log("SIGTERM received, shutting down gracefully");
     server.close(() => process.exit(0));
+});
+
+// Catches anything routes/middleware pass to next(err) or throw synchronously;
+// keeps unexpected errors from leaking stack traces/internals to clients.
+app.use((err, req, res, next) => {
+  console.error("Unhandled:", err);
+  res.status(err.status || 500).json({ message: err.status ? err.message : "Internal Server Error" });
 });

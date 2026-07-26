@@ -5,6 +5,7 @@ import generateToken from "../lib/utils/token.js";
 import { generateOTP } from "../lib/utils/otp.js";
 import { sendOTPEmail } from "../lib/utils/email.js";
 import cloudinary from "../lib/cloudinary.js";
+import { assertImageOk, isHostedImageUrl } from "../lib/utils/imageUpload.js";
 
 
 const getIdentifierQuery = (identifier) => {
@@ -27,7 +28,7 @@ export const signup = async (req, res) => {
             return res.status(400).json({message: "All fields are required"})
         }
         if (password.length < 8){
-            return res.status(400).json({message: "Password must be at least 6 characters"});
+            return res.status(400).json({message: "Password must be at least 8 characters"});
         }
         const user = await User.findOne({email});
         if (user) return res.status(400).json({message: "Email already registered"});
@@ -96,6 +97,8 @@ export const login = async (req, res) => {
             avatar: user.avatar,
             bio: user.bio,
             interests: user.interests,
+            themePreference: user.themePreference,
+            isPrivate: user.isPrivate,
         });
     } catch (error) {
         console.log("Error in login controller", error.message);
@@ -159,8 +162,9 @@ export const verifyEmailOTP = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("Error in verifyEmailOTP controller:", error);
         res.status(500).json({
-            message: error.message
+            message: "Internal Server Error"
         });
 
     }
@@ -206,7 +210,7 @@ export const sendOTP = async (req, res) => {
         res.status(200).json({ message: "OTP sent successfully" });
     } catch (err) {
         console.error("Error in sendOTP controller:", err);
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
@@ -217,8 +221,13 @@ export const updateProfile = async (req, res) => {
     const normalizedInterests = normalizeInterests(interests);
     try{
         if (avatar) {
-        const uploadResponse = await cloudinary.uploader.upload(avatar);
-        avatarUrl = uploadResponse.secure_url
+        if (isHostedImageUrl(avatar)) {
+            avatarUrl = avatar;
+        } else {
+            assertImageOk(avatar);
+            const uploadResponse = await cloudinary.uploader.upload(avatar);
+            avatarUrl = uploadResponse.secure_url
+        }
         }
         const updatedUser = await User.findByIdAndUpdate(_id, 
             {
@@ -241,8 +250,12 @@ export const updateProfile = async (req, res) => {
             themePreference: updatedUser.themePreference,
         });
     } catch (error){
-        console.log("Error in update profile", error);
-        res.status(500).json({message: "Internal Server Error"});
+        const status = error.status || 500;
+        if (status === 500) {
+            console.error("Error in update profile", error);
+            return res.status(500).json({message: "Internal Server Error"});
+        }
+        return res.status(status).json({message: error.message});
     }
 };
 
@@ -301,8 +314,13 @@ export const updateProfileSection = async (req, res) => {
         const updateData = {};
         if (bio !== undefined) updateData.bio = bio;
         if (avatar !== undefined) {
-            const uploadResponse = await cloudinary.uploader.upload(avatar);
-            updateData.avatar = uploadResponse.secure_url;
+            if (isHostedImageUrl(avatar)) {
+                updateData.avatar = avatar;
+            } else {
+                assertImageOk(avatar);
+                const uploadResponse = await cloudinary.uploader.upload(avatar);
+                updateData.avatar = uploadResponse.secure_url;
+            }
         }
         if (username !== undefined) {
             const existingUser = await User.findOne({
@@ -322,8 +340,12 @@ export const updateProfileSection = async (req, res) => {
         );
         res.status(200).json({message: "Profile section updated", user: updatedUser});
     } catch (error) {
-        console.log("Error in update profile section", error);
-        res.status(500).json({message: "Internal Server Error"});
+        const status = error.status || 500;
+        if (status === 500) {
+            console.error("Error in update profile section", error);
+            return res.status(500).json({message: "Internal Server Error"});
+        }
+        return res.status(status).json({message: error.message});
     }
 };
 

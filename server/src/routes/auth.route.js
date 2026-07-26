@@ -1,19 +1,20 @@
 import express from 'express';
 import {signup, login, logout, checkAuth, verifyEmailOTP, sendOTP, updateProfile, updateTheme, updateProfileSection, getProfileInfo} from "../controllers/auth.controller.js";
 import protectRoute from "../middleware/auth.middleware.js";
+import { authLimiter, otpLimiter, writeLimiter } from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
-router.post("/signup", signup);
-router.post("/login", login);
+router.post("/signup", authLimiter, signup);
+router.post("/login", authLimiter, login);
 router.post("/logout", logout);
 
-router.post("/verify-email", verifyEmailOTP);
-router.post("/send-otp", sendOTP);
+router.post("/verify-email", authLimiter, verifyEmailOTP);
+router.post("/send-otp", otpLimiter, sendOTP);
 
-router.put("/update-profile", protectRoute, updateProfile);
+router.put("/update-profile", protectRoute, writeLimiter, updateProfile);
 router.put("/update-theme", protectRoute, updateTheme);
-router.put("/update-profile-section", protectRoute, updateProfileSection);
+router.put("/update-profile-section", protectRoute, writeLimiter, updateProfileSection);
  
 router.get("/check", protectRoute, checkAuth);
 router.get("/profile-info", protectRoute, getProfileInfo);

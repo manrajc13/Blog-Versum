@@ -29,8 +29,14 @@ export const createInternalPost = async (req, res) => {
             slug: post.slug,
         });
     } catch (err) {
-        // Service throws err.status for expected failures (e.g. unknown author).
+        // Service throws err.status for expected failures (e.g. unknown author) —
+        // those messages are safe to return as-is. Anything else is unexpected,
+        // so log it and don't leak internals to the caller.
         const status = err.status || 500;
+        if (status === 500) {
+            console.error(err);
+            return res.status(500).json({ message: "Internal Server Error" });
+        }
         return res.status(status).json({ message: err.message });
     }
 };
