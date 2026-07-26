@@ -1,15 +1,17 @@
-"""Manual runner for the BlogVerse AI author workflow.
+"""Runner for the BlogVerse AI author workflow.
 
 Run from the project root (the folder that contains the `agents/` package):
 
     python -m agents.main            # default author (synthia)
     python -m agents.main questbot   # any author id from agents/authors
 
-It compiles the graph, invokes it for one author, prints the reducer result
-so the run can be verified manually (and inspected in LangSmith), and then
-publishes the finished post to the backend via the internal API.
+It compiles the graph, invokes it for one author, publishes the finished post
+to the backend via the internal API, and returns a JSON-serializable summary.
+`run_author()` is the reusable core (also called by the Lambda handler, see
+agents/lambda_handler.py); `run()` is the thin CLI wrapper that prints it.
 
-Environment (agents/.env - see agents/.env.example):
+Environment (agents/.env - see agents/.env.example; in Lambda these come from
+the function's environment / Secrets Manager instead - see PLAN_LAMBDA_DEPLOY.md):
     GROQ_API_KEY       required (LLM)
     TAVILY_API_KEY     optional (research; without it the graph skips searching)
     LANGSMITH_API_KEY / LANGSMITH_TRACING=true   optional (tracing)
@@ -27,9 +29,10 @@ from langgraph.store.postgres import PostgresStore
 
 from agents.authors import AUTHORS, SYNTHIA
 from agents.graphs.blog_workflow import compile_workflow
-from agents.services.api_client import publish_post, InternalApiError
+from agents.services.api_client import publish_post
 
-# Load agents/.env explicitly so this runs the same from any cwd.
+# Load agents/.env explicitly so this runs the same from any cwd. In Lambda no
+# .env is present, so this is a harmless no-op and env/secrets take over.
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # LangSmith tracing project (matches the reference implementation style).
@@ -40,12 +43,21 @@ DB_URI = os.getenv(
 )
 
 
-def run(author_id: str = SYNTHIA.id) -> None:
+def run_author(author_id: str = SYNTHIA.id) -> dict:
+    """Compile + invoke the workflow for one author, publish, and return a
+    JSON-serializable summary.
+
+    Raises on unknown author or missing DB config; lets publish errors surface
+    to the caller so a failed run is visible (marked failed in Lambda).
+    """
     author = AUTHORS.get(author_id)
     if author is None:
-        raise SystemExit(
+        raise ValueError(
             f"Unknown author '{author_id}'. Choose from: {', '.join(AUTHORS)}"
         )
+
+    if not DB_URI:
+        raise RuntimeError("BLOGVERSE_DB_URI is not set.")
 
     with PostgresStore.from_conn_string(DB_URI) as store:
         # Safe to call every run; creates the store tables if missing.
@@ -63,32 +75,25 @@ def run(author_id: str = SYNTHIA.id) -> None:
         )
 
     result = final_state.get("result")
-    print("\n" + "=" * 70)
-    print(f"AUTHOR      : {author.name} ({author.id})")
-    print(f"TOPIC       : {final_state.get('topic')}")
-    print(f"NEEDS RSRCH : {final_state.get('needs_research')} "
-          f"(iterations={final_state.get('research_iterations', 0)})")
-    print("=" * 70)
-
     if result is None:
-        print("No result produced.")
-        return
+        return {"author": author.id, "published": False, "reason": "no result produced"}
 
-    print(f"\nTITLE      : {result.title}")
-    print(f"CATCHLINE  : {result.catchline}")
-    print(f"TAGS       : {', '.join(result.tags)}")
-    print(f"SUMMARY    : {result.brief_description}")
-    print("\n--- CONTENT ---\n")
-    print(result.content)
+    response = publish_post(final_state)  # raises InternalApiError on failure
+    return {
+        "author": author.id,
+        "published": True,
+        "title": result.title,
+        "slug": response.get("slug"),
+        "postId": response.get("postId"),
+    }
 
+
+def run(author_id: str = SYNTHIA.id) -> None:
+    """CLI wrapper - keeps the existing `python -m agents.main <author>` UX."""
+    summary = run_author(author_id)
     print("\n" + "=" * 70)
-    try:
-        response = publish_post(final_state)
-    except InternalApiError as exc:
-        print(f"PUBLISH FAILED: {exc}")
-        return
-
-    print(f"PUBLISHED   : slug={response.get('slug')} postId={response.get('postId')}")
+    print(summary)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

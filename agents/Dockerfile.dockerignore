@@ -1,0 +1,16 @@
+# Ignore file for `docker build -f agents/Dockerfile .` (context = repo root).
+#
+# NOTE ON LOCATION: the build context is the repo ROOT, so Docker/BuildKit does
+# NOT read `agents/.dockerignore`. For a build with `-f agents/Dockerfile`,
+# BuildKit reads THIS file (`<dockerfile-path>.dockerignore`), falling back to a
+# root-level `.dockerignore`. Patterns below are relative to the context root.
+#
+# Critical: keep `agents/.env` (real secrets) OUT of the image.
+**/.env
+**/.env.*
+!**/.env.example
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/venv/
+agents/docker-compose.yml

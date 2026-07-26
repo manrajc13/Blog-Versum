@@ -83,7 +83,13 @@ def publish_post(final_state: BlogState) -> dict:
         response = requests.post(
             url,
             json=payload,
-            headers={"x-api-key": api_key},
+            headers={
+                "x-api-key": api_key,
+                # The `requests` default UA is `python-requests/...`, which the
+                # nginx bad-bot blocklist 403s before the request reaches the
+                # app. Send an allowlisted UA. See PLAN_LAMBDA_DEPLOY.md (§3.3).
+                "User-Agent": "blogverse-agent/1.0",
+            },
             timeout=REQUEST_TIMEOUT,
         )
     except requests.RequestException as exc:  # network / timeout / DNS
