@@ -1,7 +1,7 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import generateToken from "../lib/utils/token.js";
+import generateToken, { cookieBaseOptions } from "../lib/utils/token.js";
 import { generateOTP } from "../lib/utils/otp.js";
 import { sendOTPEmail } from "../lib/utils/email.js";
 import cloudinary from "../lib/cloudinary.js";
@@ -108,7 +108,9 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
     try{
-        res.cookie("jwt", "", {maxAge: 0})
+        // Clear with the SAME SameSite/Secure attributes used to set it, or the
+        // browser rejects the clearing cookie cross-site and logout won't stick.
+        res.cookie("jwt", "", {...cookieBaseOptions(), maxAge: 0})
         res.status(200).json({message: "Logged out successfully"});
     } catch(error) {
         console.log("Error in logout controller", error.message);

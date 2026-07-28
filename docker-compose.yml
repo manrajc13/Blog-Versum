@@ -18,6 +18,8 @@ services:
       dockerfile: Dockerfile
     env_file:
       - ./server/.env
+    ports:
+      - "5001:5001"
     depends_on:
       - redis
     healthcheck:

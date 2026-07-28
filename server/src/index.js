@@ -22,8 +22,34 @@ import dns from "dns";
 import { app, server } from "./lib/socket.js";
 import mongoSanitize from "./middleware/mongoSanitize.js";
 import { globalLimiter } from "./middleware/rateLimiters.js";
+import { globalDailyBudget } from "./middleware/globalBudget.js";
+import { requireXHR } from "./middleware/requireXHR.js";
 
 const PORT = process.env.PORT;
+
+// Origins allowed to make credentialed cross-origin requests. In the split
+// deployment this is the Vercel frontend (e.g. https://blog-versum.vercel.app);
+// locally it's http://localhost:5173. Comma-separate CLIENT_URL to allow more than
+// one (e.g. a custom domain + the vercel.app fallback).
+const allowedOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+// Narrow matcher for this project's Vercel preview deployments. Left OFF by default —
+// only the exact CLIENT_URL origins are allowed. Uncomment the use in corsOptions to
+// let previews talk to this backend.
+// const PREVIEW_ORIGIN = /^https:\/\/blog-versum-[\w-]+\.vercel\.app$/;
+
+const corsOptions = {
+  origin(origin, cb) {
+    // No Origin header = same-origin or server-to-server (curl, health checks); allow.
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    // if (PREVIEW_ORIGIN.test(origin)) return cb(null, true);
+    return cb(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+};
 
 // Force IPv4 DNS resolution — fixes ENETUNREACH on Render (IPv6 not routable)
 dns.setDefaultResultOrder('ipv4first');
@@ -32,17 +58,18 @@ dns.setDefaultResultOrder('ipv4first');
 // the real client IP from X-Forwarded-For, which per-IP rate limiting depends on.
 app.set("trust proxy", 1);
 
-app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(cookieParser());
 app.use(mongoSanitize());
 app.use(hpp());
-app.use("/api", globalLimiter);
+// CSRF guard: mutating requests must carry the X-Requested-With header our axios
+// client sets (skips safe methods and the api-key-protected /api/internal/*).
+app.use(requireXHR);
+app.use("/api", globalDailyBudget); // aggregate daily cost circuit-breaker (before per-IP)
+app.use("/api", globalLimiter);     // per-IP baseline
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 

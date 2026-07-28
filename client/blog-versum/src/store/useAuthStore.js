@@ -4,7 +4,14 @@ import {toast} from "react-hot-toast";
 import { useThemeStore } from "./useThemeStore";
 import {io} from "socket.io-client";
 
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/" ;
+// Socket.IO needs the ABSOLUTE backend origin. In the split deployment the frontend
+// is on Vercel and the API is on EC2, so "/" (same-origin) would wrongly target
+// Vercel, which has no socket server. Point at the EC2 API origin via VITE_SOCKET_URL
+// (e.g. https://blogversum-api.duckdns.org); localhost in dev.
+const BASE_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5001"
+    : import.meta.env.VITE_SOCKET_URL;
 
 const syncThemeFromUser = (user) => {
     const themePreference = user?.themePreference;
