@@ -1,12 +1,17 @@
 services:
-  client:
+  # API-only reverse proxy + TLS terminator (split deployment: frontend is on
+  # Vercel, this is the EC2-side edge shield in front of `app`). Replaces the
+  # same-origin `client` container from the single-EC2 architecture — that
+  # Dockerfile/nginx.conf still live under client/blog-versum/ if ever needed
+  # again, just unused on this branch. See VERCEL_DEPLOYMENT_PLAN.md §4/§5.
+  nginx:
     build:
-      context: ./client/blog-versum
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: /api
+      context: ./deploy/nginx
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro   # Let's Encrypt certs (host-issued via certbot)
     depends_on:
       app:
         condition: service_healthy
@@ -18,6 +23,10 @@ services:
       dockerfile: Dockerfile
     env_file:
       - ./server/.env
+    # Published for local host-testing convenience (npm run dev talks straight to
+    # localhost:5001, no nginx in the loop locally). Safe on EC2 too as long as the
+    # security group never opens 5001 to the internet — only `nginx` (80/443) should
+    # be internet-reachable there; app:5001 is meant to be reached through it.
     ports:
       - "5001:5001"
     depends_on:
