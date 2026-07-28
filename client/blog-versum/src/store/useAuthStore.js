@@ -35,8 +35,11 @@ export const useAuthStore = create((set, get) => ({
         syncThemeFromUser(response.data);
         set({authUser: response.data});
         get().connectSocket();
-      }catch (error) { 
+      }catch (error) {
         set({authUser:null});
+        // Not authenticated (no session, or an expired one) — never show a
+        // theme chosen by a previous login on this browser.
+        useThemeStore.getState().setTheme('plain');
         console.log(error);
       } finally {
         set({isCheckingAuth: false});
@@ -149,6 +152,9 @@ export const useAuthStore = create((set, get) => ({
         try{
             await axiosInstance.post("/auth/logout");
             set({authUser: null});
+            // Theme is an authenticated-account preference — revert to the
+            // default public look the moment the session ends.
+            useThemeStore.getState().setTheme('plain');
             toast.success("Logged out successfully");
             get().disconnectSocket();
         } catch (error) {

@@ -16,6 +16,7 @@ import { useThemeStore } from '../../store/useThemeStore'
 import { hexToRgba } from '../../store/themeConfig'
 import { formatCount } from '../../lib/Mockexploredata'
 import { DEFAULT_AVATAR_URL } from '../../lib/defaultAvatar'
+import UnderDevelopmentModal from '../shared/UnderDevelopmentModal'
 
 /* Heights cycle so the masonry feels naturally varied */
 const IMG_HEIGHTS = [180, 220, 160, 240, 200, 170, 230]
@@ -24,6 +25,9 @@ export default function MasonryFeed({ posts, topicColor, topicLabel }) {
   const theme = useThemeStore((state) => state.getTheme())
   const [liked, setLiked] = useState({})
   const [hovered, setHovered] = useState(null)
+  // Clicking any card is the same, whether the visitor is logged in or not —
+  // these are mock posts, so there is nothing real to open yet.
+  const [showComingSoon, setShowComingSoon] = useState(false)
 
   const toggleLike = (e, id) => {
     e.stopPropagation()
@@ -41,6 +45,7 @@ export default function MasonryFeed({ posts, topicColor, topicLabel }) {
   const accent = topicColor || theme.primary
 
   return (
+    <>
     <div
       style={{
         columnCount: 1,
@@ -65,7 +70,7 @@ export default function MasonryFeed({ posts, topicColor, topicLabel }) {
             }}
             onMouseEnter={() => setHovered(post.id)}
             onMouseLeave={() => setHovered(null)}
-            onClick={() => {/* navigate to post in real impl */}}
+            onClick={() => setShowComingSoon(true)}
           >
             {/* Cover image with sketchy border */}
             <div
@@ -201,5 +206,7 @@ export default function MasonryFeed({ posts, topicColor, topicLabel }) {
         )
       })}
     </div>
+    <UnderDevelopmentModal open={showComingSoon} onClose={() => setShowComingSoon(false)} />
+    </>
   )
 }
