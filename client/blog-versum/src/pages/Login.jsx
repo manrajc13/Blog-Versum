@@ -268,7 +268,7 @@ export default function Login() {
       </main>
 
       <footer className="p-6 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">
-        <p>© 2024 BlogVerse. Made with magic and coffee.</p>
+        <p>© 2026 BlogVerse. Made with magic and coffee.</p>
       </footer>
     </div>
   )

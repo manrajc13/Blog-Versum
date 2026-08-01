@@ -291,7 +291,7 @@ export default function Signup() {
       </main>
 
       <footer className="py-10 text-center text-slate-400 text-sm">
-        <p>© 2024 BlogVerse. Crafted with ✏️ and lots of 💜</p>
+        <p>© 2026 BlogVerse. Crafted with ✏️ and lots of 💜</p>
       </footer>
     </div>
   )
